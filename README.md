@@ -115,46 +115,13 @@ A complete ready-to-use Lovelace dashboard is provided in [`dashboards/smart_ene
 
 ---
 
-## ⚡ Energy Disaggregator & Power Signature NILM Monitor
-
-A dedicated custom integration (`custom_components/energy_disaggregator`) that monitors real-time 3-phase power from the **HomeWizard Wi-Fi P1 Meter**, recognizes high-load household appliances by their electrical power signatures, engages in interactive active learning, and creates dedicated virtual sensors compatible with the **Home Assistant Energy Dashboard**.
-
-### Key Features
-* 🔍 **3-Phase Load Signature Recognition:** Analyzes step changes ($\Delta P_1, \Delta P_2, \Delta P_3$, symmetry ratios, and power magnitude) to differentiate:
-  * **3-Phase Balanced Loads:** EV Car Chargers (11 kW), Water Boilers (3 kW).
-  * **2-Phase Loads:** Induction cooktops & stoves (L1 + L2).
-  * **1-Phase Loads:** Ovens, washing machines, tumble dryers, dishwashers.
-* 📲 **Interactive Human-in-the-Loop Active Learning:**
-  * When a power jump is detected, sends an **Actionable Notification** to your phone via the Home Assistant Companion App (or Web UI persistent notification).
-  * Proposes the most likely appliance by default (e.g. `Boiler` with 88% confidence).
-  * User can confirm with 1 tap, pick a different appliance from a dropdown, or choose **"Unknown / Ignore"**.
-  * Learns your home's unique wiring and appliance characteristics over time.
-* 📈 **Sensors Created for Every Appliance:**
-  * `sensor.<appliance>_power` (W, `measurement`)
-  * `sensor.<appliance>_energy` (kWh, `total_increasing` — directly addable to Home Assistant Energy Dashboard individual devices!)
-  * `binary_sensor.<appliance>_active` (`running` state)
-  * `select.energy_disaggregator_assigned_consumer` and `button.energy_disaggregator_confirm_consumer` for instant dashboard confirmation.
-* 🎴 **Custom Lovelace Card (`www/energy-disaggregator-card.js`):**
-  * Live 3-phase power bars (L1, L2, L3 + Total).
-  * Pop-up interactive notification banner right inside your dashboard.
-  * Real-time grid of all tracked appliances showing running/idle status, live wattage, and cumulative energy.
-
-### Installation & Setup
-1. Copy `custom_components/energy_disaggregator` into your Home Assistant `<config>/custom_components/` folder.
-2. Copy `www/energy-disaggregator-card.js` into your Home Assistant `<config>/www/` folder.
-3. Restart Home Assistant.
-4. Go to **Settings** -> **Devices & Services** -> **Add Integration** and search for **HomeWizard Energy Disaggregator**.
-5. Select your HomeWizard Phase 1, Phase 2, and Phase 3 power sensors (auto-detected if available).
-
----
-
 ## 🧪 Testing
 
-The thermal physics engine, recursive least squares estimator, MPC optimizer, and 3-phase NILM disaggregation engine include a comprehensive test suite:
+The thermal physics engine, recursive least squares estimator, and MPC optimizer include a comprehensive test suite:
 ```bash
-python -m unittest discover tests
+python -m unittest tests/test_optimizer.py
 ```
-*(All 20 unit tests pass in < 0.05 seconds with zero external dependencies).*
+*(All 9 unit tests pass in < 0.03 seconds with zero external C-dependencies).*
 
 ---
 
