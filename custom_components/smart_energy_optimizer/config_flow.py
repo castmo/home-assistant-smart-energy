@@ -81,18 +81,42 @@ class SmartEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if climate_entity:
             prefix = climate_entity.replace("climate.", "")
             if not self._data.get(CONF_HEAT_PUMP_ENERGY_SENSOR):
-                for candidate in [f"sensor.{prefix}_energy_consumed", f"sensor.{prefix}_energy"]:
+                for candidate in [
+                    f"sensor.{prefix}_energy_usage_total",
+                    f"sensor.{prefix}_energy_consumed",
+                    f"sensor.{prefix}_energy",
+                ]:
                     if self.hass.states.get(candidate):
                         self._data[CONF_HEAT_PUMP_ENERGY_SENSOR] = candidate
                         break
+            if not self._data.get(CONF_INDOOR_TEMP_SENSOR):
+                for candidate in [f"sensor.{prefix}_indoor", f"sensor.{prefix}_indoor_temperature"]:
+                    if self.hass.states.get(candidate):
+                        self._data[CONF_INDOOR_TEMP_SENSOR] = candidate
+                        break
             if not self._data.get(CONF_OUTDOOR_TEMP_SENSOR):
-                candidate = f"sensor.{prefix}_outdoor_temperature"
-                if self.hass.states.get(candidate):
-                    self._data[CONF_OUTDOOR_TEMP_SENSOR] = candidate
+                for candidate in [f"sensor.{prefix}_outdoor", f"sensor.{prefix}_outdoor_temperature"]:
+                    if self.hass.states.get(candidate):
+                        self._data[CONF_OUTDOOR_TEMP_SENSOR] = candidate
+                        break
+
+        # Auto-detect HomeWizard NILM boiler & big consumers if present
+        if not self._data.get(CONF_BOILER_POWER_SENSOR):
+            if self.hass.states.get("sensor.homewizard_nilm_disaggregator_boiler_power"):
+                self._data[CONF_BOILER_POWER_SENSOR] = "sensor.homewizard_nilm_disaggregator_boiler_power"
+        if not self._data.get(CONF_BIG_CONSUMERS):
+            nilm_consumers = [
+                s.entity_id
+                for s in self.hass.states.async_all()
+                if s.entity_id.startswith("sensor.homewizard_nilm_disaggregator_")
+                and s.entity_id.endswith("_power")
+            ]
+            if nilm_consumers:
+                self._data[CONF_BIG_CONSUMERS] = nilm_consumers
 
         # Auto-detect weather if missing
         if not self._data.get(CONF_WEATHER_ENTITY):
-            for candidate in ["weather.forecast_home", "weather.home"]:
+            for candidate in ["weather.forecast_hem", "weather.forecast_home", "weather.home"]:
                 if self.hass.states.get(candidate):
                     self._data[CONF_WEATHER_ENTITY] = candidate
                     break
@@ -102,17 +126,20 @@ class SmartEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         self._data[CONF_WEATHER_ENTITY] = s.entity_id
                         break
 
+        price_sensor = str(self._data.get(CONF_PRICE_SENSOR, "")).lower()
+        incl_vat_default = "berglarkan" in price_sensor or "tibber" in price_sensor
+
         # Standard Göteborg Energi & system defaults
         self._data.setdefault(CONF_HEAT_PUMP_MAX_POWER, 3.5)
-        self._data.setdefault(CONF_BOILER_RATED_POWER, 2.0)
+        self._data.setdefault(CONF_BOILER_RATED_POWER, 2.9)
         self._data.setdefault(CONF_BOILER_DAILY_HOURS, 2.5)
         self._data.setdefault(CONF_TARIFF_TYPE, TARIFF_GOTEBORG_TIDSTARIFF)
         self._data.setdefault(CONF_GRID_FEE_HIGH_LOAD, 0.38)
         self._data.setdefault(CONF_GRID_FEE_LOW_LOAD, 0.16)
         self._data.setdefault(CONF_ENERGY_TAX, 0.445)
-        self._data.setdefault(CONF_SURCHARGE, 0.05)
+        self._data.setdefault(CONF_SURCHARGE, 0.0 if incl_vat_default else 0.05)
         self._data.setdefault(CONF_VAT_PERCENT, 25.0)
-        self._data.setdefault(CONF_SPOT_PRICE_INCLUDES_VAT, False)
+        self._data.setdefault(CONF_SPOT_PRICE_INCLUDES_VAT, incl_vat_default)
         self._data.setdefault(CONF_ENABLE_EFFEKTDIFF, DEFAULT_ENABLE_EFFEKTDIFF)
         self._data.setdefault(CONF_PEAK_LIMIT_KW, DEFAULT_PEAK_LIMIT_KW)
         self._data.setdefault(CONF_EFFEKTAVGIFT_PRICE_PER_KW, DEFAULT_EFFEKTAVGIFT_PRICE_PER_KW)
@@ -125,16 +152,16 @@ class SmartEnergyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "target_comfort_temp": DEFAULT_TARGET_TEMP,
                 "allowed_drift": DEFAULT_ALLOWED_DRIFT,
                 "preheat_boost": DEFAULT_MAX_PREHEAT,
-                "master_enabled": True,
+                "master_enabled": False,
                 "boiler_control_enabled": True,
                 "learning_enabled": True,
                 CONF_TARIFF_TYPE: self._data.get(CONF_TARIFF_TYPE, TARIFF_GOTEBORG_TIDSTARIFF),
                 CONF_GRID_FEE_HIGH_LOAD: self._data.get(CONF_GRID_FEE_HIGH_LOAD, 0.38),
                 CONF_GRID_FEE_LOW_LOAD: self._data.get(CONF_GRID_FEE_LOW_LOAD, 0.16),
                 CONF_ENERGY_TAX: self._data.get(CONF_ENERGY_TAX, 0.445),
-                CONF_SURCHARGE: self._data.get(CONF_SURCHARGE, 0.05),
+                CONF_SURCHARGE: self._data.get(CONF_SURCHARGE, 0.0 if incl_vat_default else 0.05),
                 CONF_VAT_PERCENT: self._data.get(CONF_VAT_PERCENT, 25.0),
-                CONF_SPOT_PRICE_INCLUDES_VAT: self._data.get(CONF_SPOT_PRICE_INCLUDES_VAT, False),
+                CONF_SPOT_PRICE_INCLUDES_VAT: self._data.get(CONF_SPOT_PRICE_INCLUDES_VAT, incl_vat_default),
             },
         )
 

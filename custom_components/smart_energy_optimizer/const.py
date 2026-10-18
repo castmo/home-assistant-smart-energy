@@ -1,7 +1,7 @@
 """Constants for the Smart Energy & Thermal Optimizer integration."""
 
 DOMAIN = "smart_energy_optimizer"
-VERSION = "2.0.1"
+VERSION = "2.0.2"
 
 # Configuration Keys
 CONF_INDOOR_TEMP_SENSOR = "indoor_temp_sensor"
@@ -68,7 +68,7 @@ OPTIMIZATION_MODES = [
 ]
 
 # Defaults
-DEFAULT_TARGET_TEMP = 21.0
+DEFAULT_TARGET_TEMP = 21.5
 DEFAULT_ALLOWED_DRIFT = 1.0  # +/- deg C
 DEFAULT_MAX_PREHEAT = 1.5    # Max deg C above target before price peaks
 DEFAULT_MODE = MODE_BALANCED

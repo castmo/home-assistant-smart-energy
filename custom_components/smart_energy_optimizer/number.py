@@ -71,7 +71,7 @@ class SmartEnergyTargetTempNumber(BaseSmartEnergyNumber):
 
     def __init__(self, coordinator: SmartEnergyCoordinator, entry: ConfigEntry) -> None:
         super().__init__(
-            coordinator, entry, "target_comfort_temp", "Comfort Target Temperature", 16.0, 26.0, 0.5
+            coordinator, entry, "target_comfort_temp", "Target Comfort Temperature", 16.0, 26.0, 0.5
         )
         self._attr_icon = "mdi:thermometer-check"
 
@@ -113,7 +113,7 @@ class SmartEnergyPreheatBoostNumber(BaseSmartEnergyNumber):
 
     def __init__(self, coordinator: SmartEnergyCoordinator, entry: ConfigEntry) -> None:
         super().__init__(
-            coordinator, entry, "preheat_boost", "Pre-heat Max Boost", 0.0, 3.5, 0.1
+            coordinator, entry, "preheat_boost", "Allowed Preheat Boost", 0.0, 3.5, 0.1
         )
         self._attr_icon = "mdi:thermometer-chevron-up"
 

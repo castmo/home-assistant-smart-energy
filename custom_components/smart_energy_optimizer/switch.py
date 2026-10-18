@@ -63,7 +63,7 @@ class SmartEnergyMasterSwitch(BaseSmartEnergySwitch):
     """Master switch to enable/disable automated dispatch to heat pump and boiler."""
 
     def __init__(self, coordinator: SmartEnergyCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator, entry, "master_automation", "Master Automation")
+        super().__init__(coordinator, entry, "master_automation", "Master Automated Dispatch")
         self._attr_icon = "mdi:power"
 
     @property
@@ -89,7 +89,7 @@ class SmartEnergyBoilerSwitch(BaseSmartEnergySwitch):
     """Switch to enable/disable boiler smart dispatch."""
 
     def __init__(self, coordinator: SmartEnergyCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator, entry, "boiler_automation", "Boiler Smart Dispatch")
+        super().__init__(coordinator, entry, "boiler_automation", "Boiler Smart Scheduling")
         self._attr_icon = "mdi:water-boiler"
 
     @property
@@ -115,7 +115,7 @@ class SmartEnergyLearningSwitch(BaseSmartEnergySwitch):
     """Switch to toggle online continuous thermal learning."""
 
     def __init__(self, coordinator: SmartEnergyCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator, entry, "self_learning", "Continuous Thermal Learning")
+        super().__init__(coordinator, entry, "self_learning", "Continuous Model Learning")
         self._attr_icon = "mdi:brain"
 
     @property

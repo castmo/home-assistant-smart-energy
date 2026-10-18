@@ -1,111 +1,482 @@
 ################################################################################
-# LOVELACE DASHBOARD: SMART ENERGY, WF-RAC & EFFECT TARIFF MONITOR (v2.0)
+# LOVELACE DASHBOARD: ADAPTIVE NORDIC MINIMALIST + HIGH-DENSITY HEMS TECH (v2.2)
 # File: dashboards/smart_energy_dashboard.yaml
 #
-# Powered by the Smart Energy & Thermal Optimizer Integration
-#
-# Recommended Cards:
-#   1. custom:smart-energy-optimizer-card (/local/smart-energy-optimizer-card.js)
-#   2. power-flow-card-plus               (HACS Frontend)
-#   3. apexcharts-card                    (HACS Frontend)
+# Architecture finalized via /grill-me:
+#   - Tab 1 (Hem):           Adaptive Nordic Minimalist (follows OS Light/Dark mode,
+#                            ultra-clean status bar + chips, 2-col collapsible lights)
+#   - Tab 2 (HEMS // Energi): Locked Dark High-Density Tech 3-Column Grid:
+#                            [Col 1] MPC Optimizer, Mode/Setpoints & Thermal Physics
+#                            [Col 2] Power Flow, 3-Phase L1/L2/L3 & 4.5 kW Peak Guard
+#                            [Col 3] 24h SE3 Price vs Spot & NILM Disaggregator
+#   - Tab 3 (TV & Ljud):     Adaptive Nordic Minimalist Sonos + Sony BRAVIA
+#   - Tab 4 (Dammsugare):    Adaptive Nordic Minimalist Roborock ("Butter den Sure")
+#   - Tab 5 (System & Nät):  Locked Dark High-Density Tech Synology NAS + UniFi
 ################################################################################
 
-title: Smart Energi & Värme
+title: Huset
 views:
-  - title: Energiöversikt
-    path: smart-energy
-    icon: mdi:solar-power-variant-outline
+  # ============================================================================
+  # VIEW 1: ADAPTIVE NORDIC MINIMALIST OVERVIEW ("Hem")
+  # ============================================================================
+  - title: Hem
+    path: oversikt
+    icon: mdi:home-variant-outline
     type: sections
     max_columns: 3
+    header:
+      layout: center
+      badges_position: top
+      badges_wrap: wrap
+    badges:
+      - type: entity
+        entity: weather.forecast_hem
+        show_name: false
+        show_state: true
+        show_icon: true
+      - type: entity
+        entity: sensor.luftvarmepump_indoor
+        name: Inne
+        color: amber
+      - type: entity
+        entity: sensor.luftvarmepump_outdoor
+        name: Ute
+        color: blue
+      - type: entity
+        entity: sensor.berglarkan_70_elpris
+        name: Elpris
+        color: green
+      - type: entity
+        entity: sensor.p1_meter_effekt
+        name: Effekt
+        color: cyan
+      - type: entity
+        entity: lock.dorr
+        name: Ytterdörr
+        color: teal
+      - type: entity
+        entity: alarm_control_panel.verisure_alarm
+        name: Larm
+        color: green
     sections:
-      # ========================================================================
-      # SECTION 1: SMART ENERGY & THERMAL OPTIMIZER PRIMARY CARD
-      # ========================================================================
+      # SECTION 1: Quick-Action Chips + Vardagsrum & Klimat
       - type: grid
         cards:
-          - type: custom:smart-energy-optimizer-card
-            title: Smart Värme & Elprisoptimering
-            schedule_sensor: sensor.smart_energy_current_action
-            indoor_temp_sensor: sensor.smart_energy_projected_indoor_temp
-            price_sensor: sensor.smart_energy_total_electricity_price
-            cop_sensor: sensor.smart_energy_heat_pump_estimated_cop
-            tau_sensor: sensor.smart_energy_building_thermal_time_constant
-            savings_sensor: sensor.smart_energy_estimated_savings_today
-            big_consumers_sensor: sensor.smart_energy_big_consumers_total_power
+          - type: custom:mushroom-chips-card
+            alignment: justify
+            chips:
+              - type: entity
+                entity: light.lampor_gemensamt
+                name: Gemensamt
+                icon: mdi:lightbulb-group-outline
+                icon_color: amber
+                tap_action:
+                  action: toggle
+              - type: entity
+                entity: light.utebelysning
+                name: Ute
+                icon: mdi:outdoor-lamp
+                icon_color: orange
+                tap_action:
+                  action: toggle
+              - type: entity
+                entity: lock.dorr
+                icon_color: teal
+              - type: alarm-control-panel
+                entity: alarm_control_panel.verisure_alarm
+              - type: entity
+                entity: vacuum.butter_den_sure
+                icon_color: blue
 
-      # ========================================================================
-      # SECTION 2: ANIMATED ENERGY FLOW & CONSUMPTION BREAKDOWN
-      # ========================================================================
+          - type: heading
+            heading: Vardagsrum & TV-rum
+            heading_style: title
+            icon: mdi:sofa-outline
+
+          - type: custom:mushroom-light-card
+            entity: light.dimmer_2_3
+            name: TV-rum Tak
+            icon: mdi:ceiling-light-outline
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-light-card
+            entity: light.dimmer_2_9
+            name: TV-rum Fönster
+            icon: mdi:lamp-outline
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-media-player-card
+            entity: media_player.tv_rum
+            name: Sonos Arc • TV-rum
+            icon: mdi:soundbar
+            use_media_info: true
+            show_volume_level: true
+            volume_controls:
+              - volume_set
+              - volume_mute
+            media_controls:
+              - play_pause_stop
+              - next
+            collapsible_controls: true
+
+          - type: heading
+            heading: Klimat & Entré
+            heading_style: title
+            icon: mdi:thermostat
+
+          - type: custom:mushroom-climate-card
+            entity: climate.luftvarmepump
+            name: Mitsubishi Kazan 20
+            icon: mdi:air-conditioner
+            show_temperature_control: true
+            hvac_modes:
+              - heat
+              - auto
+              - cool
+              - "off"
+            collapsible_controls: true
+
+          - type: custom:mushroom-lock-card
+            entity: lock.dorr
+            name: Ytterdörr
+            icon: mdi:door-closed-lock
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-alarm-control-panel-card
+            entity: alarm_control_panel.verisure_alarm
+            name: Verisure Larm
+            icon: mdi:shield-home-outline
+            grid_options:
+              columns: 6
+              rows: auto
+
+      # SECTION 2: Matbord, Kök & Hall
       - type: grid
         cards:
           - type: heading
-            heading: Animerat Energiflöde (Realtid)
+            heading: Matbord & Kök
             heading_style: title
-            icon: mdi:flash
+            icon: mdi:silverware-fork-knife
 
+          - type: custom:mushroom-light-card
+            entity: light.dimmer_2_5
+            name: Matbord Tak
+            icon: mdi:chandelier
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-light-card
+            entity: light.ikea_of_sweden_tradfribulbe27wwclear250lm
+            name: Byrålampa
+            icon: mdi:desk-lamp
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-media-player-card
+            entity: media_player.matbord
+            name: Sonos Matbord
+            icon: mdi:speaker
+            use_media_info: true
+            volume_controls:
+              - volume_set
+              - volume_mute
+            media_controls:
+              - play_pause_stop
+              - next
+            collapsible_controls: true
+
+          - type: custom:mushroom-media-player-card
+            entity: media_player.kok
+            name: Sonos Kök
+            icon: mdi:speaker
+            use_media_info: true
+            volume_controls:
+              - volume_set
+              - volume_mute
+            media_controls:
+              - play_pause_stop
+              - next
+            collapsible_controls: true
+
+          - type: heading
+            heading: Hall & Entrébelysning
+            heading_style: title
+            icon: mdi:coat-rack
+
+          - type: custom:mushroom-light-card
+            entity: light.dimmer_2_6
+            name: Kapprum
+            icon: mdi:coach-lamp
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-light-card
+            entity: light.dimmer_2_8
+            name: Hallgång
+            icon: mdi:light-recessed
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-light-card
+            entity: light.dimmer_2_4
+            name: Utanför kök
+            icon: mdi:light-recessed
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 12
+              rows: auto
+
+      # SECTION 3: Sovrum, Altan, Utomhus & Service
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sovrum & Filips Rum
+            heading_style: title
+            icon: mdi:bed-king-outline
+
+          - type: custom:mushroom-light-card
+            entity: light.sunricher_hk_sl_dim_a
+            name: Sovrum Taklampa
+            icon: mdi:ceiling-light
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-light-card
+            entity: light.dimmer_2_7
+            name: Filips Rum
+            icon: mdi:lamp
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: heading
+            heading: Altan & Utomhus
+            heading_style: title
+            icon: mdi:pine-tree
+
+          - type: custom:mushroom-light-card
+            entity: light.dimmer_2
+            name: Altanbelysning
+            icon: mdi:outdoor-lamp
+            show_brightness_control: true
+            collapsible_controls: true
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-light-card
+            entity: light.utebelysning
+            name: Utebelysning
+            icon: mdi:wall-sconce-flat
+            show_brightness_control: false
+            grid_options:
+              columns: 6
+              rows: auto
+
+          - type: custom:mushroom-media-player-card
+            entity: media_player.altan
+            name: Sonos One • Altan
+            icon: mdi:speaker-wireless
+            use_media_info: true
+            volume_controls:
+              - volume_set
+              - volume_mute
+            media_controls:
+              - play_pause_stop
+              - next
+            collapsible_controls: true
+
+          - type: heading
+            heading: Städning & Inköp
+            heading_style: title
+            icon: mdi:robot-vacuum
+
+          - type: custom:mushroom-vacuum-card
+            entity: vacuum.butter_den_sure
+            name: Butter den Sure (Roborock)
+            icon: mdi:robot-vacuum
+            commands:
+              - start_pause
+              - stop
+              - return_home
+            collapsible_controls: true
+
+          - type: todo-list
+            entity: todo.inkopslista
+            title: Inköpslista
+
+  # ============================================================================
+  # VIEW 2: HIGH-DENSITY TECH ENERGY TAB ("HEMS // Energi")
+  # ============================================================================
+  - title: HEMS // Energi
+    path: el
+    icon: mdi:lightning-bolt-circle
+    type: sections
+    max_columns: 3
+    sections:
+      # COLUMN 1: MPC Optimizer, Mode/Setpoint Controls & Thermal Physics (COP / τ)
+      - type: grid
+        cards:
+          - type: entities
+            title: MPC OPTIMIZATION & SETPOINT CONTROLS
+            show_header_toggle: false
+            entities:
+              - entity: switch.smart_energy_master_automated_dispatch
+                name: Automatisk Termostatstyrning (Master)
+              - entity: select.smart_energy_optimization_mode
+                name: MPC Optimeringsläge
+              - entity: number.smart_energy_target_comfort_temperature
+                name: Bas-komforttemperatur (21.5 °C)
+              - entity: number.smart_energy_allowed_temperature_drift
+                name: Tillåten Eco-sänkning (Höglast)
+              - entity: number.smart_energy_allowed_preheat_boost
+                name: Tillåten Förvärmning (Låglast)
+              - entity: switch.smart_energy_continuous_model_learning
+                name: Kontinuerlig 1R1C Självlärning (RLS)
+              - entity: switch.smart_energy_boiler_smart_scheduling
+                name: Smart Varmvattenberedarestyrning
+
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: THERMAL DYNAMICS // INDOOR vs OUTDOOR [24H]
+              show_states: true
+              colorize_states: true
+            graph_span: 24h
+            series:
+              - entity: sensor.luftvarmepump_indoor
+                name: T_indoor (WF-RAC)
+                color: "#f59e0b"
+              - entity: sensor.luftvarmepump_outdoor
+                name: T_outdoor (WF-RAC)
+                color: "#38bdf8"
+
+      # COLUMN 2: Live Power Flow, 3-Phase L1/L2/L3 Graph & Effekttariff Peak Guard (4.5 kW)
+      - type: grid
+        cards:
           - type: custom:power-flow-card-plus
-            title: Husets Energiflöde
-            watt_threshold: 100
+            title: REALTIME POWER FLOW // P1 METER
+            watt_threshold: 50
             kw_decimals: 2
             min_flow_rate: 0.75
             max_flow_rate: 6
             clickable_entities: true
             entities:
               grid:
-                entity: sensor.smart_energy_projected_peak_power
-                name: Elnät
+                entity: sensor.p1_meter_effekt
+                name: Göteborg Energi
                 icon: mdi:transmission-tower
                 color:
-                  consumption: "#ef5350"
-                  production: "#66bb6a"
+                  consumption: "#38bdf8"
+                  production: "#10b981"
               individual:
-                - entity: sensor.smart_energy_current_hp_power
-                  name: Värmepump (WF-RAC)
-                  icon: mdi:heat-pump
-                  color: "#26a69a"
+                - entity: sensor.homewizard_nilm_disaggregator_boiler_power
+                  name: Varmvattenberedare
+                  icon: mdi:water-boiler
+                  color: "#f59e0b"
                   show_direction: true
-                - entity: sensor.smart_energy_big_consumers_total_power
-                  name: Storförbrukare
-                  icon: mdi:lightning-bolt
-                  color: "#ff7043"
+                - entity: sensor.homewizard_nilm_disaggregator_floor_heating_bathroom_1_power
+                  name: Golvvärme
+                  icon: mdi:heating-coil
+                  color: "#10b981"
+                  show_direction: true
+                - entity: sensor.homewizard_nilm_disaggregator_stove_power
+                  name: Spis & Ugn
+                  icon: mdi:stove
+                  color: "#ec4899"
+                  show_direction: true
+                - entity: sensor.dimmer_2_power_6
+                  name: Belysning
+                  icon: mdi:lightbulb-group
+                  color: "#a855f7"
                   show_direction: true
 
-          - type: entities
-            title: Effekttariff & Toppeffektbevakning
-            show_header_toggle: false
-            entities:
-              - entity: sensor.smart_energy_projected_peak_power
-                name: Prognostiserad Toppeffekt
-              - entity: sensor.smart_energy_effekttariff_monthly_savings
-                name: Beräknad Månadsbesparing (Effektvakt)
-              - entity: sensor.smart_energy_total_electricity_price
-                name: Totalpris inkl. Elnät & Moms
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: 3-PHASE LOAD TELEMETRY (L1 / L2 / L3) [6H]
+              show_states: true
+              colorize_states: true
+            graph_span: 6h
+            series:
+              - entity: sensor.p1_meter_effekt_fas_1
+                name: Phase L1
+                color: "#38bdf8"
+              - entity: sensor.p1_meter_effekt_fas_2
+                name: Phase L2
+                color: "#10b981"
+              - entity: sensor.p1_meter_effekt_fas_3
+                name: Phase L3
+                color: "#f59e0b"
 
-      # ========================================================================
-      # SECTION 3: QUICK CONTROLS & COMFORT SETTINGS
-      # ========================================================================
+      # COLUMN 3: 24h SE3 Price vs Load Chart & NILM Appliance Disaggregator
       - type: grid
         cards:
-          - type: heading
-            heading: Inställningar & Styrning
-            heading_style: title
-            icon: mdi:tune
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: SE3 PRICE (TIBBER vs SPOT) & LOAD [24H]
+              show_states: true
+              colorize_states: true
+            graph_span: 24h
+            series:
+              - entity: sensor.berglarkan_70_elpris
+                name: Tibber Pris (Berglärkan 70)
+                color: "#f59e0b"
+                type: area
+                opacity: 0.2
+              - entity: sensor.nord_pool_se3_aktuellt_pris
+                name: Nord Pool SE3 Spot
+                color: "#10b981"
+                type: line
 
           - type: entities
-            title: Värmestyrning & Komfort
+            title: HOMEWIZARD NILM // APPLIANCE DISAGGREGATION
             show_header_toggle: false
             entities:
-              - entity: select.smart_energy_optimization_mode
-                name: Optimeringsläge
-              - entity: number.smart_energy_target_comfort_temperature
-                name: Bas-innetemperatur
-              - entity: number.smart_energy_allowed_temperature_drift
-                name: Tillåten nattsänkning / eco
-              - entity: number.smart_energy_allowed_preheat_boost
-                name: Tillåten förvärmningshöjning
-              - entity: switch.smart_energy_master_automated_dispatch
-                name: Automatisk Termostatstyrning
-              - entity: switch.smart_energy_boiler_smart_scheduling
-                name: Smart Varmvattenberedarestyrning
-              - entity: switch.smart_energy_continuous_model_learning
-                name: Kontinuerlig Självlärning (RLS)
+              - entity: sensor.homewizard_nilm_disaggregator_last_detected_event
+                name: Senaste Signaturhändelse
+              - entity: sensor.homewizard_nilm_disaggregator_boiler_power
+                name: Varmvattenberedare (W)
+              - entity: sensor.homewizard_nilm_disaggregator_boiler_energy
+                name: Varmvattenberedare (kWh)
+              - entity: sensor.homewizard_nilm_disaggregator_floor_heating_bathroom_1_power
+                name: Golvvärme Badrum 1 (W)
+              - entity: sensor.homewizard_nilm_disaggregator_floor_heating_bathroom_2_power
+                name: Golvvärme Badrum 2 (W)
+              - entity: sensor.homewizard_nilm_disaggregator_stove_power
+                name: Spis / Induktionshäll (W)
+              - entity: sensor.homewizard_nilm_disaggregator_oven_power
+                name: Ugn (W)
+              - entity: sensor.homewizard_nilm_disaggregator_dishwasher_power
+                name: Diskmaskin (W)
+              - entity: sensor.homewizard_nilm_disaggregator_washer_power
+                name: Tvättmaskin (W)
