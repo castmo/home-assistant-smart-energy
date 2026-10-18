@@ -1,4 +1,4 @@
-# Smart Energy & Mitsubishi WF-RAC Manager for Home Assistant (v2.0)
+# Smart Energy & Mitsubishi WF-RAC Manager for Home Assistant (v2.0.1)
 
 [![GitHub Release](https://img.shields.io/github/v/release/castmo/home-assistant-smart-energy?style=flat-square)](https://github.com/castmo/home-assistant-smart-energy/releases)
 [![HACS Default](https://img.shields.io/badge/HACS-Custom%20Integration-orange.svg?style=flat-square)](https://hacs.xyz)
@@ -9,12 +9,11 @@ A complete, self-learning Home Energy Management System (HEMS) and Lovelace dash
 
 ---
 
-## 🌟 What's New in v2.0.0 (The UI & Thermal MPC Revolution)
+## 🌟 What's New in v2.0.1 (Patch Update)
 
-In **v1.0**, managing energy required copying 500+ lines of YAML template sensors, configuring dozens of input helpers, and manually editing automations.
-
-**v2.0.0** completely transforms the project into a **Native Home Assistant Custom Integration**:
-* 🚀 **1-Minute UI Setup:** Configured entirely through the Home Assistant UI (**Settings -> Devices & Services -> Add Integration**). No YAML required!
+* 🔧 **Manifest & HACS Fixes:** Updated `iot_class` to `local_polling` and added `integration_type: hub` for maximum compatibility with all Home Assistant Core versions (2023.12 through 2026+).
+* 🏷️ **Clean HACS Discovery:** Standardized `hacs.json` and official GitHub Releases for seamless single-click discovery.
+* 🚀 **1-Minute UI Setup:** Configured entirely through the Home Assistant UI (**Settings -> Devices & Services -> Add Integration**).
 * 🧠 **Self-Learning Building Physics (RLS):** Employs an Equivalent Thermal Parameter model (1R1C network) with online Recursive Least Squares to learn your house's unique thermal capacity ($C_{th}$), wall resistance ($R_{th}$), and time constant ($\tau$).
 * ❄️ **Native Mitsubishi WF-RAC Auto-Discovery:** Seamlessly connects to your Mitsubishi heat pump. Automatically discovers indoor room temperature, outdoor temperature, and cumulative energy consumption directly from `climate.<device>`—**zero extra sensors required**!
 * ⚡ **Göteborg Energi Tidstariff & Effekttariff Protection:** Pre-configured with official Gothenburg transmission fees (Winter Höglast/Låglast). Features anti-coincidence load staggering to prevent heat pump boosts and water boilers from creating expensive 10+ kW peaks.
@@ -51,12 +50,12 @@ flowchart TD
    https://github.com/castmo/home-assistant-smart-energy
    ```
    Category: **Integration**.
-4. Click **Add**, then click **Download** (choose v2.0.0).
+4. Click **Add**, then click **Download** (choose v2.0.1).
 5. **Restart Home Assistant** (**Settings -> System -> Restart**).
 6. **Hard refresh your browser** (`Ctrl + F5` or `Cmd + Shift + R`) to reload Home Assistant's integration cache.
 
 ### Option 2: Manual Installation
-1. Download the latest `v2.0.0` release from [Releases](https://github.com/castmo/home-assistant-smart-energy/releases).
+1. Download the latest `v2.0.1` release from [Releases](https://github.com/castmo/home-assistant-smart-energy/releases).
 2. Copy `custom_components/smart_energy_optimizer/` into your Home Assistant `<config>/custom_components/` directory.
 3. Copy `www/smart-energy-optimizer-card.js` into your Home Assistant `<config>/www/` directory.
 4. **Restart Home Assistant** and **Hard refresh your browser** (`Ctrl + F5`).
@@ -82,6 +81,12 @@ flowchart TD
 > 💡 **Using Mitsubishi WF-RAC?** Indoor room temperature, outdoor temperature, and active energy consumption are all auto-detected automatically without needing any extra physical sensors!
 >
 > 💡 **Living in Gothenburg?** Official Göteborg Energi Tidstariff (Winter High/Low Load), 2026 Swedish energy tax (0.445 SEK/kWh), and 25% VAT are pre-configured automatically!
+
+> 🔍 **Troubleshooting "Integration not found in search":**
+> 1. Verify the files are located in `/config/custom_components/smart_energy_optimizer/` (with `manifest.json` directly inside).
+> 2. Fully **Restart Home Assistant** (**Settings -> System -> Restart**).
+> 3. Perform a **hard browser refresh** (`Ctrl + F5` or `Cmd + Shift + R`) or open an incognito window to clear cached frontend integration lists.
+> 4. Search for either `Smart Energy` or the domain name `smart_energy_optimizer`.
 
 ---
 

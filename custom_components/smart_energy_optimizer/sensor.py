@@ -74,9 +74,9 @@ class BaseSmartEnergySensor(CoordinatorEntity[SmartEnergyCoordinator], SensorEnt
         return DeviceInfo(
             identifiers={(DOMAIN, self.entry.entry_id)},
             name="Smart Energy & Thermal Optimizer",
-            manufacturer="Home Assistant Community",
+            manufacturer="castmo",
             model="MPC Thermal Building Controller",
-            sw_version="1.0.0",
+            sw_version="2.0.1",
         )
 
 
