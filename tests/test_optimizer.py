@@ -435,6 +435,90 @@ class TestThermalModelAndOptimizer(unittest.TestCase):
         self.assertEqual(adv_res["type"], "form")
         self.assertEqual(adv_res["step_id"], "advanced_heat_pump")
 
+    def test_high_consumer_scoring(self):
+        """Test flexible consumer scoring (battery charging, EV, appliances)."""
+        model = BuildingThermalModel(c_th=6.0, r_th=3.5, q_internal=0.4)
+        optimizer = EnergyOptimizer(thermal_model=model)
+
+        now = datetime.datetime(2026, 1, 15, 0, 0)  # Winter weekday
+        prices = [
+            (now + datetime.timedelta(hours=0), 0.50),  # Cheap night
+            (now + datetime.timedelta(hours=1), 0.55),
+            (now + datetime.timedelta(hours=7), 2.50),  # Expensive morning peak
+            (now + datetime.timedelta(hours=8), 2.80),
+        ]
+        weather = [(t, 0.0) for t, _ in prices]
+
+        result = optimizer.solve(
+            current_indoor_temp=21.0,
+            target_comfort_temp=21.0,
+            allowed_drift=1.0,
+            preheat_boost=1.0,
+            mode=MODE_BALANCED,
+            prices=prices,
+            outdoor_forecast=weather,
+        )
+
+        intervals = result.intervals
+        # Cheap night intervals should have high score
+        self.assertGreaterEqual(intervals[0].consumer_score, 80)
+        self.assertEqual(intervals[0].consumer_rating, "optimal")
+
+        # Peak hours should have low score
+        self.assertLess(intervals[3].consumer_score, 40)
+        self.assertEqual(intervals[3].consumer_rating, "avoid")
+
+        # Best consumer hours should prioritize the cheapest night hours (avoiding morning peaks)
+        self.assertEqual(len(result.best_consumer_hours), 3)
+        best_times = [h["time"] for h in result.best_consumer_hours]
+        self.assertIn("00:00", best_times)
+        self.assertIn("01:00", best_times)
+        self.assertNotIn("08:00", best_times)
+
+    def test_shower_scoring_with_delayed_reheat(self):
+        """Test shower scoring specifically verifying delayed boiler reheating dynamics."""
+        model = BuildingThermalModel(c_th=6.0, r_th=3.5, q_internal=0.4)
+        optimizer = EnergyOptimizer(thermal_model=model)
+
+        # Scenario:
+        # Hour 0 (04:00): cheap (0.50 SEK)
+        # Hour 1 (05:00): cheap (0.50 SEK)
+        # Hour 2 (06:00): SPIKE to 3.00 SEK (winter morning peak)
+        # Hour 3 (07:00): SPIKE to 3.20 SEK
+        # Hour 4 (08:00): SPIKE to 3.00 SEK
+        # Hour 5 (21:00): expensive (2.00 SEK)
+        # Hour 6 (22:00): cheap night drop (0.60 SEK)
+        # Hour 7 (23:00): cheap night drop (0.50 SEK)
+        now = datetime.datetime(2026, 1, 15, 4, 0)  # 04:00 winter Thursday
+        prices = [
+            (now + datetime.timedelta(hours=0), 0.50),  # 04:00
+            (now + datetime.timedelta(hours=1), 0.50),  # 05:00
+            (now + datetime.timedelta(hours=2), 3.00),  # 06:00
+            (now + datetime.timedelta(hours=3), 3.20),  # 07:00
+            (now + datetime.timedelta(hours=4), 3.00),  # 08:00
+        ]
+        weather = [(t, 0.0) for t, _ in prices]
+
+        result = optimizer.solve(
+            current_indoor_temp=21.0,
+            target_comfort_temp=21.0,
+            allowed_drift=1.0,
+            preheat_boost=1.0,
+            mode=MODE_BALANCED,
+            prices=prices,
+            outdoor_forecast=weather,
+        )
+
+        inv_04 = result.intervals[0]  # 04:00
+        inv_05 = result.intervals[1]  # 05:00
+
+        # At 05:00, direct spot price is only 0.50 SEK.
+        # BUT showering at 05:00 means boiler reheats at 06:00 (3.00 SEK) and 07:00 (3.20 SEK)!
+        # Therefore, shower score at 05:00 must be significantly lower than at 04:00.
+        self.assertGreater(inv_05.shower_effective_price, inv_04.shower_effective_price)
+        self.assertLess(inv_05.shower_score, inv_04.shower_score)
+        self.assertIn("05:00 - 07:30", inv_05.shower_reheat_window)
+
 
 if __name__ == "__main__":
     unittest.main()

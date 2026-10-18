@@ -345,6 +345,19 @@ views:
       # COLUMN 1: MPC Optimizer, Mode/Setpoint Controls & Thermal Physics (COP / τ)
       - type: grid
         cards:
+          - type: custom:smart-energy-optimizer-card
+            title: HEMS TELEMETRY // SE3 GÖTEBORG
+            style_mode: tech
+
+          - type: entities
+            title: DISPATCH & OPPORTUNITY SCORES
+            show_header_toggle: false
+            entities:
+              - entity: sensor.smart_energy_consumer_score
+                name: Högförbrukar-score (Batteri / Bil / Tvätt)
+              - entity: sensor.smart_energy_shower_score
+                name: Duschscore (Fördröjd uppvärmning)
+
           - type: entities
             title: MPC OPTIMIZATION & SETPOINT CONTROLS
             show_header_toggle: false

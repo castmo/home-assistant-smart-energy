@@ -1,4 +1,4 @@
-# Smart Energy & Mitsubishi WF-RAC Manager for Home Assistant (v2.0.1)
+# Smart Energy & Mitsubishi WF-RAC Manager for Home Assistant (v2.1.0)
 
 [![GitHub Release](https://img.shields.io/github/v/release/castmo/home-assistant-smart-energy?style=flat-square)](https://github.com/castmo/home-assistant-smart-energy/releases)
 [![HACS Default](https://img.shields.io/badge/HACS-Custom%20Integration-orange.svg?style=flat-square)](https://hacs.xyz)
@@ -9,16 +9,17 @@ A complete, self-learning Home Energy Management System (HEMS) and Lovelace dash
 
 ---
 
-## 🌟 What's New in v2.0.1 (Patch Update)
+## 🌟 What's New in v2.1.0 (Smart Opportunity & Shower Scoring)
 
-* 🔧 **Manifest & HACS Fixes:** Updated `iot_class` to `local_polling` and added `integration_type: hub` for maximum compatibility with all Home Assistant Core versions (2023.12 through 2026+).
-* 🏷️ **Clean HACS Discovery:** Standardized `hacs.json` and official GitHub Releases for seamless single-click discovery.
-* 🚀 **1-Minute UI Setup:** Configured entirely through the Home Assistant UI (**Settings -> Devices & Services -> Add Integration**).
-* 🧠 **Self-Learning Building Physics (RLS):** Employs an Equivalent Thermal Parameter model (1R1C network) with online Recursive Least Squares to learn your house's unique thermal capacity ($C_{th}$), wall resistance ($R_{th}$), and time constant ($\tau$).
-* ❄️ **Native Mitsubishi WF-RAC Auto-Discovery:** Seamlessly connects to your Mitsubishi heat pump. Automatically discovers indoor room temperature, outdoor temperature, and cumulative energy consumption directly from `climate.<device>`—**zero extra sensors required**!
-* ⚡ **Göteborg Energi Tidstariff & Effekttariff Protection:** Pre-configured with official Gothenburg transmission fees (Winter Höglast/Låglast). Features anti-coincidence load staggering to prevent heat pump boosts and water boilers from creating expensive 10+ kW peaks.
-* 📊 **Custom Lovelace Card (`smart-energy-optimizer-card.js`):** Beautiful interactive card showcasing live COP, action timeline (Boost / Normal / Eco), Göteborg Energi tariff badge, and big consumers.
-* 📖 **Dedicated External Sensors Guide:** Step-by-step instructions for Nordpool, Tibber, Mitsubishi WF-RAC, and Göteborg Energi HAN/P1 meter readers.
+* ⚡ **High Consumer Opportunity Score (`sensor.smart_energy_consumer_score`):**
+  - Continuous 0–100 rating for flexible heavy loads (Home Battery charging, EV smart charging, laundry & dryer).
+  - Integrates all-in electricity price, solar self-production bonus, and anti-coincidence peak congestion protection.
+* 🚿 **Delayed Shower Reheat Score (`sensor.smart_energy_shower_score`):**
+  - **The Delayed Consumption Engine:** Taking a shower drains hot water; the water boiler (VVB) reheats cold replacement water over the *subsequent* 1.5 to 2.5 hours.
+  - Scores each hour based on the *actual reheating window cost*, alerting you if an early-morning shower will trigger boiler reheat during expensive 06:00–08:00 peak tariffs!
+* 📊 **Interactive SVG Diagram in Lovelace Card (`smart-energy-optimizer-card.js`):**
+  - One-click tabs to switch between **[⚡ High Consumers]**, **[🚿 Shower Score]**, and **[🌡️ Heat Pump MPC]**.
+  - Color-coded bar diagrams with hover tooltips, reheat windows, and clear guidance.
 
 ---
 

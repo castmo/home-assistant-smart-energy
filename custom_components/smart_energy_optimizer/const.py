@@ -1,7 +1,7 @@
 """Constants for the Smart Energy & Thermal Optimizer integration."""
 
 DOMAIN = "smart_energy_optimizer"
-VERSION = "2.0.2"
+VERSION = "2.1.0"
 
 # Configuration Keys
 CONF_INDOOR_TEMP_SENSOR = "indoor_temp_sensor"

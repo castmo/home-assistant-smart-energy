@@ -54,6 +54,15 @@ class OptimizationInterval:
     battery_discharge_kw: float = 0.0
     ev_charging_kw: float = 0.0
 
+    # High Consumer & Shower Opportunity Scores
+    consumer_score: int = 50  # 0 to 100
+    consumer_rating: str = "fair"  # "optimal", "good", "fair", "avoid"
+    shower_score: int = 50  # 0 to 100
+    shower_rating: str = "fair"  # "optimal", "good", "fair", "avoid"
+    shower_effective_price: float = 0.0  # Weighted price during delayed reheat (SEK/kWh)
+    shower_reheat_window: str = ""  # e.g. "21:30 - 23:30"
+    shower_reheat_cost_sek: float = 0.0  # Estimated SEK for ~3 kWh shower reheat
+
     # Net Grid Interaction
     net_grid_power_kw: float = 0.0
     cost: float = 0.0
@@ -79,6 +88,16 @@ class OptimizationResult:
     recommended_setpoint: float = 21.0
     recommended_boiler_state: bool = False
     current_action: str = "normal"
+
+    # High Consumer & Shower Opportunity Scores
+    current_consumer_score: int = 50
+    current_consumer_rating: str = "fair"
+    current_shower_score: int = 50
+    current_shower_rating: str = "fair"
+    current_shower_reheat_window: str = ""
+    current_shower_effective_price: float = 0.0
+    best_consumer_hours: List[Dict[str, Any]] = field(default_factory=list)
+    best_shower_hours: List[Dict[str, Any]] = field(default_factory=list)
 
 
 class EnergyOptimizer:
@@ -196,7 +215,11 @@ class EnergyOptimizer:
             peak_limit_kw=self.peak_limit_kw if self.enable_effekttariff else None,
         )
 
-        # 5. Compute Net Energy Balance & Savings Metrics
+        # 5. Compute Opportunity Scores for Flexible High Consumers & Showers
+        self._compute_consumer_scores(intervals)
+        self._compute_shower_scores(intervals)
+
+        # 6. Compute Net Energy Balance & Savings Metrics
         result = self._calculate_totals(
             intervals=intervals,
             current_temp=current_indoor_temp,
@@ -482,6 +505,126 @@ class EnergyOptimizer:
                 intervals[idx].ev_charging_kw = round(alloc, 2)
                 remaining_energy -= alloc
 
+    def _compute_consumer_scores(self, intervals: List[OptimizationInterval]) -> None:
+        """Calculate hourly 0-100 opportunity score for flexible high energy consumers.
+
+        Evaluates flexible assets like Home Battery charging, EV Smart Charging,
+        and heavy domestic appliances (laundry, dryer, dishwasher).
+
+        Criteria:
+        - All-in electricity price relative to min/max across horizon.
+        - Peak load & effekttariff congestion (avoids compounding during HP boost).
+        - Winter high-load tariff penalty (Göteborg Energi Nov-Mar weekdays 06-22).
+        - Solar generation availability (bonus score when self-producing).
+        """
+        if not intervals:
+            return
+
+        prices = [inv.price for inv in intervals]
+        p_min = min(prices)
+        p_max = max(prices)
+        p_range = p_max - p_min if (p_max - p_min) > 0.001 else 0.1
+
+        for inv in intervals:
+            # 1. Base price score (0 to 100): lower price yields higher score
+            norm_price = (inv.price - p_min) / p_range
+            score = 100.0 * (1.0 - norm_price)
+
+            # 2. Solar generation bonus: if solar excess is available, high consumption is ideal
+            if inv.solar_generation_kw > 0.5:
+                score += min(20.0, inv.solar_generation_kw * 10.0)
+
+            # 3. Peak congestion penalty: if heat pump is already boosting, avoid adding heavy loads
+            planned_hp = inv.heat_pump_power_kw + inv.boiler_power_kw
+            if self.enable_effekttariff and planned_hp > (self.peak_limit_kw * 0.7):
+                score -= 15.0
+
+            # 4. Göteborg Energi / winter high-load penalty (Nov-Mar weekdays 06:00-22:00)
+            dt = inv.timestamp
+            is_winter = dt.month in [11, 12, 1, 2, 3]
+            is_weekday = dt.weekday() < 5
+            if is_winter and is_weekday and (6 <= dt.hour < 22):
+                score -= 10.0
+
+            final_score = int(max(0, min(100, round(score))))
+            inv.consumer_score = final_score
+
+            if final_score >= 80:
+                inv.consumer_rating = "optimal"
+            elif final_score >= 60:
+                inv.consumer_rating = "good"
+            elif final_score >= 40:
+                inv.consumer_rating = "fair"
+            else:
+                inv.consumer_rating = "avoid"
+
+    def _compute_shower_scores(
+        self,
+        intervals: List[OptimizationInterval],
+        reheat_energy_kwh: float = 3.0,
+    ) -> None:
+        """Calculate hourly 0-100 score for taking a shower.
+
+        Crucial insight: Hot water drawn during a shower at interval `i` causes
+        the electric water boiler (VVB) to reheat cold replacement water with a delay
+        spanning the subsequent 1.5 to 2.5 hours.
+
+        Delayed reheat distribution model:
+        - Interval i (tail of shower): ~20% of reheat energy
+        - Interval i+1 (bulk reheat):  ~50% of reheat energy
+        - Interval i+2 (top off):      ~30% of reheat energy
+
+        If someone showers at 05:30 right before an expensive morning peak, the boiler
+        heats during 06:00-08:00 when tariffs and transmission fees are highest.
+        This score penalizes such traps and highlights optimal low-cost shower windows.
+        """
+        n = len(intervals)
+        if n == 0:
+            return
+
+        reheat_prices = []
+        for i in range(n):
+            p_i = intervals[i].price
+            p_next1 = intervals[i + 1].price if (i + 1 < n) else p_i
+            p_next2 = intervals[i + 2].price if (i + 2 < n) else p_next1
+
+            eff_price = 0.20 * p_i + 0.50 * p_next1 + 0.30 * p_next2
+            reheat_prices.append(eff_price)
+
+        p_min = min(reheat_prices)
+        p_max = max(reheat_prices)
+        p_range = p_max - p_min if (p_max - p_min) > 0.001 else 0.1
+
+        for i, inv in enumerate(intervals):
+            eff_p = reheat_prices[i]
+            norm_eff = (eff_p - p_min) / p_range
+            score = 100.0 * (1.0 - norm_eff)
+
+            # Check if bulk reheat window (hours i+1, i+2) overlaps with high-load hours
+            t_reheat = inv.timestamp + datetime.timedelta(hours=1)
+            is_winter = t_reheat.month in [11, 12, 1, 2, 3]
+            is_weekday = t_reheat.weekday() < 5
+            if is_winter and is_weekday and (6 <= t_reheat.hour < 22):
+                score -= 12.0
+
+            final_score = int(max(0, min(100, round(score))))
+            inv.shower_score = final_score
+            inv.shower_effective_price = round(eff_p, 4)
+            inv.shower_reheat_cost_sek = round(eff_p * reheat_energy_kwh, 2)
+
+            t_start = inv.timestamp.strftime("%H:%M")
+            t_end = (inv.timestamp + datetime.timedelta(hours=2, minutes=30)).strftime("%H:%M")
+            inv.shower_reheat_window = f"{t_start} - {t_end}"
+
+            if final_score >= 80:
+                inv.shower_rating = "optimal"
+            elif final_score >= 60:
+                inv.shower_rating = "good"
+            elif final_score >= 40:
+                inv.shower_rating = "fair"
+            else:
+                inv.shower_rating = "avoid"
+
     def _calculate_totals(
         self,
         intervals: List[OptimizationInterval],
@@ -489,7 +632,7 @@ class EnergyOptimizer:
         target_temp: float,
         mode: str,
     ) -> OptimizationResult:
-        """Calculate total energy, costs, peak power, and baseline comparison."""
+        """Calculate total energy, costs, peak power, baseline comparison, and top scores."""
         total_opt_cost = 0.0
         total_base_cost = 0.0
 
@@ -534,6 +677,34 @@ class EnergyOptimizer:
         effekt_monthly_savings = round(effekt_saved_kw * self.effektavgift_price_per_kw, 2)
         peak_shaving_active = self.enable_effekttariff and (effekt_saved_kw > 0.1)
 
+        # Identify top 3 upcoming hours for high consumers and showers (within 24h)
+        horizon_24 = intervals[:min(24, len(intervals))]
+        sorted_consumer = sorted(horizon_24, key=lambda x: x.consumer_score, reverse=True)
+        best_consumer_hours = [
+            {
+                "time": inv.timestamp.strftime("%H:%M"),
+                "iso": inv.timestamp.isoformat(),
+                "score": inv.consumer_score,
+                "rating": inv.consumer_rating,
+                "price": round(inv.price, 4),
+            }
+            for inv in sorted_consumer[:3]
+        ]
+
+        sorted_shower = sorted(horizon_24, key=lambda x: x.shower_score, reverse=True)
+        best_shower_hours = [
+            {
+                "time": inv.timestamp.strftime("%H:%M"),
+                "iso": inv.timestamp.isoformat(),
+                "score": inv.shower_score,
+                "rating": inv.shower_rating,
+                "reheat_window": inv.shower_reheat_window,
+                "effective_price": round(inv.shower_effective_price, 4),
+                "reheat_cost_sek": inv.shower_reheat_cost_sek,
+            }
+            for inv in sorted_shower[:3]
+        ]
+
         first = intervals[0]
         return OptimizationResult(
             intervals=intervals,
@@ -548,5 +719,13 @@ class EnergyOptimizer:
             recommended_setpoint=first.heat_pump_target_setpoint,
             recommended_boiler_state=(first.boiler_action == "heating"),
             current_action=first.heat_pump_action,
+            current_consumer_score=first.consumer_score,
+            current_consumer_rating=first.consumer_rating,
+            current_shower_score=first.shower_score,
+            current_shower_rating=first.shower_rating,
+            current_shower_reheat_window=first.shower_reheat_window,
+            current_shower_effective_price=first.shower_effective_price,
+            best_consumer_hours=best_consumer_hours,
+            best_shower_hours=best_shower_hours,
         )
 

@@ -17,6 +17,7 @@ class SmartEnergyOptimizerCard extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._selectedHourIndex = null;
+    this._activeChart = "consumer"; // "consumer" | "shower" | "mpc"
   }
 
   setConfig(config) {
@@ -41,6 +42,8 @@ class SmartEnergyOptimizerCard extends HTMLElement {
       savings_sensor: "sensor.smart_energy_estimated_savings_today",
       tau_sensor: "sensor.smart_energy_building_thermal_time_constant",
       cop_sensor: "sensor.smart_energy_heat_pump_estimated_cop",
+      consumer_score_sensor: "sensor.smart_energy_consumer_score",
+      shower_score_sensor: "sensor.smart_energy_shower_score",
       peak_limit_kw: 5.0,
       ...config,
     };
@@ -168,8 +171,40 @@ class SmartEnergyOptimizerCard extends HTMLElement {
     const boilerPower =
       this._numState("sensor.homewizard_nilm_disaggregator_boiler_power", 0) / 1000.0;
 
+    const consumerScoreState = this._hass.states[this._config.consumer_score_sensor];
+    const showerScoreState = this._hass.states[this._config.shower_score_sensor];
+
+    const consumerScore =
+      consumerScoreState && consumerScoreState.state !== "unavailable" && consumerScoreState.state !== "unknown"
+        ? parseInt(consumerScoreState.state)
+        : (currentHour && currentHour.consumer_score !== undefined ? currentHour.consumer_score : 85);
+    const consumerRating =
+      (consumerScoreState && consumerScoreState.attributes && consumerScoreState.attributes.rating) ||
+      (currentHour && currentHour.consumer_rating) ||
+      (consumerScore >= 80 ? "optimal" : consumerScore >= 60 ? "good" : consumerScore >= 40 ? "fair" : "avoid");
+
+    const showerScore =
+      showerScoreState && showerScoreState.state !== "unavailable" && showerScoreState.state !== "unknown"
+        ? parseInt(showerScoreState.state)
+        : (currentHour && currentHour.shower_score !== undefined ? currentHour.shower_score : 70);
+    const showerRating =
+      (showerScoreState && showerScoreState.attributes && showerScoreState.attributes.rating) ||
+      (currentHour && currentHour.shower_rating) ||
+      (showerScore >= 80 ? "optimal" : showerScore >= 60 ? "good" : showerScore >= 40 ? "fair" : "avoid");
+    const showerReheatWindow =
+      (showerScoreState && showerScoreState.attributes && showerScoreState.attributes.current_reheat_window) ||
+      (currentHour && currentHour.shower_reheat_window) || "Reheats next 2h";
+
     const isTech = this._config.style_mode === "tech";
-    const chartHtml = this._renderTimelineChart(schedule, spotPrice, totalPrice);
+    let chartHtml = "";
+    if (this._activeChart === "shower") {
+      chartHtml = this._renderShowerScoreChart(schedule, totalPrice);
+    } else if (this._activeChart === "mpc") {
+      chartHtml = this._renderTimelineChart(schedule, spotPrice, totalPrice);
+    } else {
+      chartHtml = this._renderConsumerScoreChart(schedule, totalPrice);
+    }
+
     const consumersHtml = this._renderConsumers(consumers, hpPower, boilerPower);
     const peakPct = Math.min(100, Math.round((gridPowerKw / this._config.peak_limit_kw) * 100));
 
@@ -271,6 +306,76 @@ class SmartEnergyOptimizerCard extends HTMLElement {
           padding: 2px 6px;
           border-radius: 4px;
           text-align: center;
+        }
+        .score-banner {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+        .score-pill-card {
+          background: #0b1120;
+          border: 1px solid #1e293b;
+          border-radius: 8px;
+          padding: 8px 10px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .score-pill-icon {
+          font-size: 1.25rem;
+        }
+        .score-pill-body {
+          flex: 1;
+          min-width: 0;
+        }
+        .score-pill-title {
+          font-size: 0.65rem;
+          font-weight: 700;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .score-pill-val {
+          font-size: 0.85rem;
+          font-weight: 700;
+          margin-top: 2px;
+        }
+        .score-optimal { color: #10b981; }
+        .score-good { color: #06b6d4; }
+        .score-fair { color: #f59e0b; }
+        .score-avoid { color: #ef4444; }
+
+        .chart-tab-bar {
+          display: flex;
+          gap: 4px;
+          margin-bottom: 8px;
+          background: #0b1120;
+          padding: 3px;
+          border-radius: 6px;
+          border: 1px solid #1e293b;
+        }
+        .chart-tab-btn {
+          flex: 1;
+          padding: 6px 4px;
+          border: none;
+          border-radius: 4px;
+          background: transparent;
+          color: #64748b;
+          font-family: inherit;
+          font-size: 0.68rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          text-align: center;
+        }
+        .chart-tab-btn.active {
+          background: #1e293b;
+          color: #38bdf8;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .mode-selector {
           display: flex;
@@ -383,6 +488,27 @@ class SmartEnergyOptimizerCard extends HTMLElement {
           </div>
         </div>
 
+        <div class="score-banner">
+          <div class="score-pill-card">
+            <span class="score-pill-icon">⚡</span>
+            <div class="score-pill-body">
+              <div class="score-pill-title">Batteri / Bil / Tvätt</div>
+              <div class="score-pill-val score-${consumerRating}">
+                ${consumerScore}% • ${consumerRating.toUpperCase()}
+              </div>
+            </div>
+          </div>
+          <div class="score-pill-card">
+            <span class="score-pill-icon">🚿</span>
+            <div class="score-pill-body">
+              <div class="score-pill-title">Dusch (Fördröjd)</div>
+              <div class="score-pill-val score-${showerRating}">
+                ${showerScore}% • ${showerRating.toUpperCase()}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="mode-selector">
           <button class="mode-btn ${currentMode === "price_optimized" ? "active" : ""}" id="btn-mode-price">
             [PRICE_OPT]
@@ -395,10 +521,18 @@ class SmartEnergyOptimizerCard extends HTMLElement {
           </button>
         </div>
 
-        <div class="section-title">
-          <span>24H MPC PRICE & DISPATCH TIMELINE</span>
-          <span>ACTION: ${currentAction.toUpperCase()}</span>
+        <div class="chart-tab-bar">
+          <button class="chart-tab-btn ${this._activeChart === 'consumer' ? 'active' : ''}" id="tab-consumer">
+            ⚡ HÖGFÖRBRUKAR-SCORE (BATTERI / BIL)
+          </button>
+          <button class="chart-tab-btn ${this._activeChart === 'shower' ? 'active' : ''}" id="tab-shower">
+            🚿 DUSCH-SCORE (FÖRDRÖJD BEREDARE)
+          </button>
+          <button class="chart-tab-btn ${this._activeChart === 'mpc' ? 'active' : ''}" id="tab-mpc">
+            🌡️ VÄRMEPUMP MPC
+          </button>
         </div>
+
         <div class="chart-container">
           ${chartHtml}
         </div>
@@ -412,6 +546,19 @@ class SmartEnergyOptimizerCard extends HTMLElement {
         </div>
       </ha-card>
     `;
+
+    this.shadowRoot.getElementById("tab-consumer")?.addEventListener("click", () => {
+      this._activeChart = "consumer";
+      this.render();
+    });
+    this.shadowRoot.getElementById("tab-shower")?.addEventListener("click", () => {
+      this._activeChart = "shower";
+      this.render();
+    });
+    this.shadowRoot.getElementById("tab-mpc")?.addEventListener("click", () => {
+      this._activeChart = "mpc";
+      this.render();
+    });
 
     this.shadowRoot.getElementById("btn-mode-price")?.addEventListener("click", () => this._setMode("price_optimized"));
     this.shadowRoot.getElementById("btn-mode-balanced")?.addEventListener("click", () => this._setMode("balanced"));
@@ -434,6 +581,123 @@ class SmartEnergyOptimizerCard extends HTMLElement {
       name,
       power_kw: this._numState(eid, 0) / 1000.0,
     }));
+  }
+
+  _renderConsumerScoreChart(schedule, fallbackTotal) {
+    let items = schedule ? schedule.slice(0, 24) : [];
+    if (items.length === 0) {
+      const nowHour = new Date().getHours();
+      items = Array.from({ length: 24 }, (_, idx) => {
+        const h = (nowHour + idx) % 24;
+        const score = h >= 0 && h <= 5 ? 95 : h >= 13 && h <= 15 ? 75 : h >= 17 && h <= 20 ? 25 : 60;
+        return {
+          time: new Date(Date.now() + idx * 3600000).toISOString(),
+          consumer_score: score,
+          consumer_rating: score >= 80 ? "optimal" : score >= 60 ? "good" : score >= 40 ? "fair" : "avoid",
+          price: fallbackTotal,
+        };
+      });
+    }
+
+    const width = 480;
+    const height = 110;
+    const barWidth = width / items.length;
+
+    let bars = "";
+    items.forEach((item, idx) => {
+      const x = idx * barWidth;
+      const score = item.consumer_score !== undefined ? item.consumer_score : 50;
+      const barHeight = Math.max(6, (score / 100) * 65);
+      const y = height - barHeight - 20;
+
+      let color = "#10b981"; // optimal
+      if (score < 40) color = "#ef4444";
+      else if (score < 60) color = "#f59e0b";
+      else if (score < 80) color = "#06b6d4";
+
+      const timeLabel = String(new Date(item.time).getHours()).padStart(2, "0") + ":00";
+      const showLabel = idx % 3 === 0;
+
+      bars += `
+        <g style="cursor:pointer;">
+          <title>${timeLabel} — Score: ${score}/100 (${(item.consumer_rating || "fair").toUpperCase()})\nElpris: ${(item.price || 0).toFixed(2)} kr/kWh\nPassar för: Hembatteriladdning, Elbilsladdning, Tvätt & Disk</title>
+          <rect x="${x + 2}" y="${y}" width="${barWidth - 4}" height="${barHeight}" fill="${color}" opacity="0.9" rx="3" />
+          <text x="${x + barWidth / 2}" y="${y - 4}" font-size="7.5" fill="${color}" font-weight="700" text-anchor="middle">${score}</text>
+          ${showLabel ? `<text x="${x + barWidth / 2}" y="${height - 4}" font-size="8.5" fill="#64748b" text-anchor="middle">${timeLabel}</text>` : ""}
+        </g>
+      `;
+    });
+
+    return `
+      <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#94a3b8;">
+        <span>⚡ <strong>HÖGFÖRBRUKAR-SCORE (0-100)</strong> // Optimala timmar för batteri & elbil</span>
+        <span style="color:#10b981; font-weight:700;">GRÖNT = BÄSTA PRIS & LÅG EFFEKT</span>
+      </div>
+      <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; display:block;">${bars}</svg>
+      <div style="margin-top:6px; font-size:0.68rem; color:#64748b; line-height:1.3; background:#0b1120; padding:6px 10px; border-radius:6px; border-left:3px solid #10b981;">
+        💡 <strong>Smart Dispatch:</strong> Visar när du ska köra batteriladdning, ladda elbil eller köra tvätt. Score kombinerar elpris, Göteborg Energi låglast/höglast och skyddar mot effekttariff-toppar.
+      </div>
+    `;
+  }
+
+  _renderShowerScoreChart(schedule, fallbackTotal) {
+    let items = schedule ? schedule.slice(0, 24) : [];
+    if (items.length === 0) {
+      const nowHour = new Date().getHours();
+      items = Array.from({ length: 24 }, (_, idx) => {
+        const h = (nowHour + idx) % 24;
+        const score = (h >= 21 || h <= 3) ? 92 : (h === 4 || h === 5) ? 35 : (h >= 6 && h <= 8) ? 20 : (h >= 11 && h <= 15) ? 80 : 45;
+        return {
+          time: new Date(Date.now() + idx * 3600000).toISOString(),
+          shower_score: score,
+          shower_rating: score >= 80 ? "optimal" : score >= 60 ? "good" : score >= 40 ? "fair" : "avoid",
+          shower_reheat_window: `${String(h).padStart(2, "0")}:00 - ${String((h+2)%24).padStart(2, "0")}:30`,
+          shower_effective_price: fallbackTotal,
+        };
+      });
+    }
+
+    const width = 480;
+    const height = 110;
+    const barWidth = width / items.length;
+
+    let bars = "";
+    items.forEach((item, idx) => {
+      const x = idx * barWidth;
+      const score = item.shower_score !== undefined ? item.shower_score : 50;
+      const barHeight = Math.max(6, (score / 100) * 65);
+      const y = height - barHeight - 20;
+
+      let color = "#10b981"; // optimal
+      if (score < 40) color = "#ef4444";
+      else if (score < 60) color = "#f59e0b";
+      else if (score < 80) color = "#06b6d4";
+
+      const timeLabel = String(new Date(item.time).getHours()).padStart(2, "0") + ":00";
+      const showLabel = idx % 3 === 0;
+      const reheatWin = item.shower_reheat_window || `${timeLabel} + 2h`;
+      const effP = item.shower_effective_price ? item.shower_effective_price.toFixed(2) : (item.price ? item.price.toFixed(2) : "--");
+
+      bars += `
+        <g style="cursor:pointer;">
+          <title>${timeLabel} — Duschscore: ${score}/100 (${(item.shower_rating || "fair").toUpperCase()})\n💧 Beredare återuppvärmer: ${reheatWin}\n⚡ Snittelpris under uppvärmning: ${effP} kr/kWh</title>
+          <rect x="${x + 2}" y="${y}" width="${barWidth - 4}" height="${barHeight}" fill="${color}" opacity="0.9" rx="3" />
+          <text x="${x + barWidth / 2}" y="${y - 4}" font-size="7.5" fill="${color}" font-weight="700" text-anchor="middle">${score}</text>
+          ${showLabel ? `<text x="${x + barWidth / 2}" y="${height - 4}" font-size="8.5" fill="#64748b" text-anchor="middle">${timeLabel}</text>` : ""}
+        </g>
+      `;
+    });
+
+    return `
+      <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#94a3b8;">
+        <span>🚿 <strong>DUSCH-SCORE (FÖRDRÖJD BEREDARE)</strong> // 0-100</span>
+        <span style="color:#06b6d4; font-weight:700;">INBERÄKNAR 1.5–2.5H UPPVÄRMNING</span>
+      </div>
+      <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; display:block;">${bars}</svg>
+      <div style="margin-top:6px; font-size:0.68rem; color:#64748b; line-height:1.3; background:#0b1120; padding:6px 10px; border-radius:6px; border-left:3px solid #06b6d4;">
+        💧 <strong>Varför fördröjt?</strong> När du duschar töms beredaren på varmvatten. Varmvattenberedaren startar ca 10-15 min in och fortsätter värma kallt ersättningsvatten i 1.5–2.5 timmar. Denna score beräknar elpriset under just beredarens efterföljande uppvärmning!
+      </div>
+    `;
   }
 
   _renderTimelineChart(schedule, fallbackSpot, fallbackTotal) {

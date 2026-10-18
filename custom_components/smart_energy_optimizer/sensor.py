@@ -46,6 +46,8 @@ async def async_setup_entry(
         SmartEnergyBigConsumersSensor(coordinator, entry),
         SmartEnergyPeakPowerSensor(coordinator, entry),
         SmartEnergyEffektavgiftSavingsSensor(coordinator, entry),
+        SmartEnergyConsumerScoreSensor(coordinator, entry),
+        SmartEnergyShowerScoreSensor(coordinator, entry),
     ]
 
     async_add_entities(entities)
@@ -76,7 +78,7 @@ class BaseSmartEnergySensor(CoordinatorEntity[SmartEnergyCoordinator], SensorEnt
             name="Smart Energy & Thermal Optimizer",
             manufacturer="castmo",
             model="MPC Thermal Building Controller",
-            sw_version="2.0.1",
+            sw_version="2.1.0",
         )
 
 
@@ -315,6 +317,81 @@ class SmartEnergyEffektavgiftSavingsSensor(BaseSmartEnergySensor):
         return {
             "peak_limit_kw": self.coordinator.data.get("peak_limit_kw"),
             "effektavgift_price_per_kw": self.coordinator.optimizer.effektavgift_price_per_kw,
+        }
+
+
+class SmartEnergyConsumerScoreSensor(BaseSmartEnergySensor):
+    """Sensor reporting opportunity score (0-100) for flexible high energy consumers."""
+
+    def __init__(self, coordinator: SmartEnergyCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "consumer_score", "High Consumer Score")
+        self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:battery-charging-high"
+
+    @property
+    def native_value(self) -> int:
+        """Return the current consumer opportunity score (0 to 100)."""
+        return int(self.coordinator.data.get("consumer_score", 50))
+
+    @property
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return best hours, rating, and hourly forecast scores."""
+        return {
+            "rating": self.coordinator.data.get("consumer_rating", "fair"),
+            "best_hours": self.coordinator.data.get("best_consumer_hours", []),
+            "hourly_scores": [
+                {
+                    "time": item.get("time"),
+                    "score": item.get("consumer_score", 50),
+                    "rating": item.get("consumer_rating", "fair"),
+                    "price": item.get("price", 0.0),
+                }
+                for item in self.coordinator.data.get("schedule", [])
+            ],
+            "recommended_for": "Home Battery Storage, EV Smart Charging, Laundry, Dishwasher",
+        }
+
+
+class SmartEnergyShowerScoreSensor(BaseSmartEnergySensor):
+    """Sensor reporting shower opportunity score taking delayed water boiler reheat into account."""
+
+    def __init__(self, coordinator: SmartEnergyCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "shower_score", "Shower Score")
+        self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:shower-head"
+
+    @property
+    def native_value(self) -> int:
+        """Return the current shower score (0 to 100)."""
+        return int(self.coordinator.data.get("shower_score", 50))
+
+    @property
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return delayed reheat window, effective price, best shower times, and hourly scores."""
+        return {
+            "rating": self.coordinator.data.get("shower_rating", "fair"),
+            "reheat_delay_hours": 2.0,
+            "current_reheat_window": self.coordinator.data.get("shower_reheat_window", ""),
+            "current_effective_price": self.coordinator.data.get("shower_effective_price", 0.0),
+            "best_shower_hours": self.coordinator.data.get("best_shower_hours", []),
+            "hourly_scores": [
+                {
+                    "time": item.get("time"),
+                    "score": item.get("shower_score", 50),
+                    "rating": item.get("shower_rating", "fair"),
+                    "effective_price": item.get("shower_effective_price", 0.0),
+                    "reheat_window": item.get("shower_reheat_window", ""),
+                    "estimated_reheat_cost_sek": item.get("shower_reheat_cost_sek", 0.0),
+                }
+                for item in self.coordinator.data.get("schedule", [])
+            ],
+            "delayed_reheat_explanation": (
+                "Taking a shower at time T draws hot water from the boiler. "
+                "The boiler then reheats the replacement cold water over the subsequent 1.5 to 2.5 hours. "
+                "This score evaluates the electricity price during that delayed reheat window."
+            ),
         }
 
 

@@ -339,6 +339,14 @@ class SmartEnergyCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
             "current_energy_tax": round(self._latest_price_breakdowns.get(result.intervals[0].timestamp.isoformat()).energy_tax, 4) if (result.intervals and result.intervals[0].timestamp.isoformat() in self._latest_price_breakdowns) else 0.0,
             "is_high_load": self._latest_price_breakdowns.get(result.intervals[0].timestamp.isoformat()).is_high_load if (result.intervals and result.intervals[0].timestamp.isoformat() in self._latest_price_breakdowns) else False,
             "tariff_currency": self.tariff_calculator.currency,
+            "consumer_score": result.current_consumer_score,
+            "consumer_rating": result.current_consumer_rating,
+            "shower_score": result.current_shower_score,
+            "shower_rating": result.current_shower_rating,
+            "shower_reheat_window": result.current_shower_reheat_window,
+            "shower_effective_price": result.current_shower_effective_price,
+            "best_consumer_hours": result.best_consumer_hours,
+            "best_shower_hours": result.best_shower_hours,
             "schedule": [
                 {
                     "time": inv.timestamp.isoformat(),
@@ -358,6 +366,13 @@ class SmartEnergyCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
                     "solar_kw": inv.solar_generation_kw,
                     "net_grid_kw": inv.net_grid_power_kw,
                     "cost": inv.cost,
+                    "consumer_score": inv.consumer_score,
+                    "consumer_rating": inv.consumer_rating,
+                    "shower_score": inv.shower_score,
+                    "shower_rating": inv.shower_rating,
+                    "shower_effective_price": inv.shower_effective_price,
+                    "shower_reheat_window": inv.shower_reheat_window,
+                    "shower_reheat_cost_sek": inv.shower_reheat_cost_sek,
                 }
                 for inv in result.intervals
             ],
