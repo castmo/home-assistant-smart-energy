@@ -1,0 +1,99 @@
+confirm_event:
+  name: Confirm Detected Event
+  description: Confirm a detected power step event with a specified consumer.
+  fields:
+    consumer:
+      name: Consumer ID
+      description: The consumer ID (e.g., boiler, stove, oven, car_charger, washer, dryer, dishwasher, heat_pump, or unknown).
+      required: false
+      example: boiler
+      selector:
+        text:
+    event_id:
+      name: Event ID
+      description: Optional event ID to confirm (defaults to latest pending event).
+      required: false
+      example: edge_1710000000_a1b2
+      selector:
+        text:
+
+mark_unknown:
+  name: Mark Event as Unknown
+  description: Mark the detected power step event as unknown or ignore.
+  fields:
+    event_id:
+      name: Event ID
+      description: Optional event ID to mark unknown.
+      required: false
+      example: edge_1710000000_a1b2
+      selector:
+        text:
+
+teach_consumer:
+  name: Teach Consumer Power Signature
+  description: Manually calibrate or configure an expected power signature for a consumer.
+  fields:
+    consumer_id:
+      name: Consumer ID
+      description: The consumer identifier (e.g. boiler, car_charger, sauna).
+      required: true
+      example: boiler
+      selector:
+        text:
+    power:
+      name: Nominal Power
+      description: Total rated or typical power in Watts.
+      required: true
+      example: 3000
+      selector:
+        number:
+          min: 100
+          max: 30000
+          unit_of_measurement: W
+    phase_type:
+      name: Phase Type
+      description: Single phase, two phase, or balanced three phase.
+      required: false
+      default: any
+      example: 3_phase
+      selector:
+        select:
+          options:
+            - any
+            - 1_phase
+            - 2_phase
+            - 3_phase
+    power_l1:
+      name: Phase L1 Power
+      description: Power drawn on phase 1 in Watts.
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 10000
+          unit_of_measurement: W
+    power_l2:
+      name: Phase L2 Power
+      description: Power drawn on phase 2 in Watts.
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 10000
+          unit_of_measurement: W
+    power_l3:
+      name: Phase L3 Power
+      description: Power drawn on phase 3 in Watts.
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 10000
+          unit_of_measurement: W
+
+reset_learning:
+  name: Reset Disaggregation Learning
+  description: Reset all learned power signatures and profiles back to factory priors.

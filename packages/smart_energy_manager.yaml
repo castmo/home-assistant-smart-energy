@@ -1,0 +1,39 @@
+################################################################################
+# SMART ENERGY & HEAT PUMP MANAGER (v2.0 MIGRATION PACKAGE)
+# File: packages/smart_energy_manager.yaml
+#
+# NOTE: As of v2.0, the core optimization logic, thermal physics learning (1R1C),
+# Göteborg Energi Tidstariff, Effekttariff mitigation, and Mitsubishi WF-RAC
+# controls have been migrated to the native Home Assistant integration:
+#
+#   custom_components/smart_energy_optimizer
+#
+# You no longer need to manually edit dozens of YAML template sensors!
+#
+# This package provides optional compatibility bridges for legacy YAML dashboards.
+################################################################################
+
+template:
+  - sensor:
+      - name: "Energy Flow Grid Power"
+        unique_id: legacy_bridge_energy_flow_grid_power
+        device_class: power
+        state_class: measurement
+        unit_of_measurement: "kW"
+        state: >
+          {{ states('sensor.smart_energy_projected_peak_power') | default(0, true) }}
+
+      - name: "Energy Flow Heat Pump Power WF-RAC"
+        unique_id: legacy_bridge_energy_flow_hp_power
+        device_class: power
+        state_class: measurement
+        unit_of_measurement: "kW"
+        state: >
+          {{ states('sensor.smart_energy_big_consumers_total_power') | default(0, true) }}
+
+      - name: "Total Electricity Price SEK"
+        unique_id: legacy_bridge_total_electricity_price_sek
+        state_class: measurement
+        unit_of_measurement: "SEK/kWh"
+        state: >
+          {{ states('sensor.smart_energy_total_electricity_price') | default(0, true) }}

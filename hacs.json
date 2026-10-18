@@ -1,0 +1,6 @@
+{
+  "name": "Smart Energy & Thermal Optimizer",
+  "render_readme": true,
+  "content_in_root": false,
+  "homeassistant": "2023.12.0"
+}

@@ -1,0 +1,11 @@
+{
+  "domain": "smart_energy_optimizer",
+  "name": "Smart Energy & Thermal Optimizer",
+  "codeowners": ["@castmo"],
+  "config_flow": true,
+  "documentation": "https://github.com/castmo/home-assistant-smart-energy",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/castmo/home-assistant-smart-energy/issues",
+  "requirements": [],
+  "version": "2.0.0"
+}

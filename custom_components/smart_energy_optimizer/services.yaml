@@ -1,0 +1,7 @@
+recalculate_plan:
+  name: Recalculate Optimization Plan
+  description: Forces immediate recalculation of the heat pump and boiler 24-48 hour schedule based on latest spot prices and weather forecasts.
+
+reset_learning_model:
+  name: Reset Thermal Model
+  description: Resets the learned building thermal capacity and resistance parameters back to default priors (useful if major building insulation work or renovations were done).

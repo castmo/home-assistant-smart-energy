@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HomeWizard 3-Phase Energy Disaggregator",
+        "description": "Connect your HomeWizard Wi-Fi P1 meter 3-phase power sensors. The integration identifies large appliances (Boiler, Stove, Oven, Car Charger, Washer, Dryer, etc.) based on real-time power signatures and learns continuously with your confirmation.",
+        "data": {
+          "phase_l1_sensor": "Phase L1 Active Power Sensor (e.g. sensor.p1_meter_active_power_l1)",
+          "phase_l2_sensor": "Phase L2 Active Power Sensor (e.g. sensor.p1_meter_active_power_l2)",
+          "phase_l3_sensor": "Phase L3 Active Power Sensor (e.g. sensor.p1_meter_active_power_l3)",
+          "total_power_sensor": "Total Active Power Sensor (Optional, auto-computed if empty)",
+          "notify_service": "Notification Service for Learning (e.g. notify.notify or notify.mobile_app_phone)",
+          "min_step_watts": "Minimum Power Step Detection Threshold (Watts)",
+          "enable_notifications": "Enable Active Learning Notifications",
+          "auto_confirm_threshold": "Auto-Confirm after N successful confirmations (0 = always ask)"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Energy Disaggregator Options",
+        "description": "Adjust detection sensitivity and notification preferences.",
+        "data": {
+          "min_step_watts": "Minimum Power Step Detection Threshold (Watts)",
+          "enable_notifications": "Enable Active Learning Notifications",
+          "notify_service": "Notification Service",
+          "auto_confirm_threshold": "Auto-Confirm Threshold (0 = always ask)"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Quick Setup (Heat Pump & Electricity Price)",
+        "description": "Connect your Heat Pump and Electricity Spot Price sensor. If you use Mitsubishi WF-RAC, indoor room temperature, outdoor temperature, and energy consumption are detected automatically!",
+        "data": {
+          "heat_pump_climate": "Heat Pump Climate Entity (e.g. Mitsubishi WF-RAC)",
+          "price_sensor": "Electricity Spot Price Sensor (e.g. Nordpool SE3, Tibber)",
+          "weather_entity": "Weather Entity for Temperature Forecast (Optional)",
+          "configure_advanced": "Customize Advanced Options (Boiler, Solar, Battery, Custom Tariffs)"
+        }
+      },
+      "advanced_heat_pump": {
+        "title": "Advanced Heat Pump & Boiler Setup",
+        "description": "Optional overrides for heat pump ratings and domestic hot water (DHW) boiler scheduling. If you use Mitsubishi WF-RAC, you can leave the sensor overrides empty.",
+        "data": {
+          "heat_pump_max_power": "Heat Pump Max Electrical Power (kW)",
+          "heat_pump_energy_sensor": "Heat Pump Energy Sensor (Optional override, e.g. sensor.<name>_energy_consumed)",
+          "heat_pump_power_sensor": "Heat Pump Active Power Sensor (Optional override, W or kW)",
+          "indoor_temp_sensor": "Indoor Temperature Sensor (Optional override)",
+          "outdoor_temp_sensor": "Outdoor Temperature Sensor (Optional override)",
+          "boiler_entity": "Water Heater / Boiler Switch or Entity (Optional)",
+          "boiler_power_sensor": "Water Heater Power Sensor (Optional)",
+          "boiler_rated_power": "Water Heater Rated Power (kW)",
+          "boiler_run_hours_per_day": "Water Heater Target Daily Heating Hours (h)"
+        }
+      },
+      "tariff": {
+        "title": "Electricity Tariff & Göteborg Energi Fees",
+        "description": "Pre-configured with official Göteborg Energi Tidstariff (Winter High/Low Load) and Swedish energy taxes. Modify only if your contract differs.",
+        "data": {
+          "tariff_type": "Grid Tariff Profile",
+          "grid_fee_high_load": "Transmission Fee - High Load / Höglast (Winter weekdays 06-22)",
+          "grid_fee_low_load": "Transmission Fee - Low Load / Låglast (Nights/weekends/summer)",
+          "energy_tax": "Swedish Energy Tax / Energiskatt (SEK/kWh)",
+          "surcharge": "Supplier Surcharge / Påslag & Certificates (SEK/kWh)",
+          "vat_percent": "VAT / Moms (%)",
+          "spot_price_includes_vat": "Spot Price Sensor Already Includes VAT"
+        }
+      },
+      "subsystems": {
+        "title": "Subsystems & Extensibility",
+        "description": "Select individual big consumers and optional solar, battery, and EV charger assets.",
+        "data": {
+          "big_consumers": "Monitored Big Consumer Power Sensors",
+          "solar_power_sensor": "Solar PV Active Generation Sensor",
+          "solar_forecast_entity": "Solar Production Forecast Entity",
+          "battery_soc_sensor": "Home Battery State of Charge (SOC)",
+          "battery_power_sensor": "Home Battery Charge/Discharge Power Sensor",
+          "battery_capacity_kwh": "Home Battery Usable Capacity (kWh)",
+          "ev_charger_entity": "EV Charger Switch or Control Entity",
+          "ev_charger_power_sensor": "EV Charger Power Sensor"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optimization, Comfort & Tariff Preferences",
+        "description": "Adjust target indoor comfort, optimization mode, and Göteborg Energi tariff parameters.",
+        "data": {
+          "mode": "Optimization Mode",
+          "target_comfort_temp": "Base Comfort Indoor Temperature (°C)",
+          "allowed_drift": "Allowed Temperature Drift Below Comfort (°C)",
+          "preheat_boost": "Allowed Pre-heating Boost Above Comfort (°C)",
+          "tariff_type": "Grid Tariff Profile",
+          "grid_fee_high_load": "Transmission Fee - High Load / Höglast",
+          "grid_fee_low_load": "Transmission Fee - Low Load / Låglast",
+          "energy_tax": "Swedish Energy Tax / Energiskatt (SEK/kWh)",
+          "surcharge": "Supplier Surcharge / Påslag (SEK/kWh)",
+          "vat_percent": "VAT / Moms (%)",
+          "master_enabled": "Enable Master Automated Dispatch",
+          "boiler_control_enabled": "Enable Boiler Smart Scheduling",
+          "learning_enabled": "Enable Continuous Thermal Model Self-Learning"
+        }
+      }
+    }
+  }
+}

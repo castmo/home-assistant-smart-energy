@@ -1,0 +1,11 @@
+{
+  "domain": "energy_disaggregator",
+  "name": "Energy Disaggregator & Power Signature Monitor",
+  "codeowners": ["@home-assistant-community"],
+  "config_flow": true,
+  "documentation": "https://github.com/home-assistant-community/energy_disaggregator",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/home-assistant-community/energy_disaggregator/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

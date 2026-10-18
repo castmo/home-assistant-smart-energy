@@ -1,0 +1,111 @@
+################################################################################
+# LOVELACE DASHBOARD: SMART ENERGY, WF-RAC & EFFECT TARIFF MONITOR (v2.0)
+# File: dashboards/smart_energy_dashboard.yaml
+#
+# Powered by the Smart Energy & Thermal Optimizer Integration
+#
+# Recommended Cards:
+#   1. custom:smart-energy-optimizer-card (/local/smart-energy-optimizer-card.js)
+#   2. power-flow-card-plus               (HACS Frontend)
+#   3. apexcharts-card                    (HACS Frontend)
+################################################################################
+
+title: Smart Energi & Värme
+views:
+  - title: Energiöversikt
+    path: smart-energy
+    icon: mdi:solar-power-variant-outline
+    type: sections
+    max_columns: 3
+    sections:
+      # ========================================================================
+      # SECTION 1: SMART ENERGY & THERMAL OPTIMIZER PRIMARY CARD
+      # ========================================================================
+      - type: grid
+        cards:
+          - type: custom:smart-energy-optimizer-card
+            title: Smart Värme & Elprisoptimering
+            schedule_sensor: sensor.smart_energy_current_action
+            indoor_temp_sensor: sensor.smart_energy_projected_indoor_temp
+            price_sensor: sensor.smart_energy_total_electricity_price
+            cop_sensor: sensor.smart_energy_heat_pump_estimated_cop
+            tau_sensor: sensor.smart_energy_building_thermal_time_constant
+            savings_sensor: sensor.smart_energy_estimated_savings_today
+            big_consumers_sensor: sensor.smart_energy_big_consumers_total_power
+
+      # ========================================================================
+      # SECTION 2: ANIMATED ENERGY FLOW & CONSUMPTION BREAKDOWN
+      # ========================================================================
+      - type: grid
+        cards:
+          - type: heading
+            heading: Animerat Energiflöde (Realtid)
+            heading_style: title
+            icon: mdi:flash
+
+          - type: custom:power-flow-card-plus
+            title: Husets Energiflöde
+            watt_threshold: 100
+            kw_decimals: 2
+            min_flow_rate: 0.75
+            max_flow_rate: 6
+            clickable_entities: true
+            entities:
+              grid:
+                entity: sensor.smart_energy_projected_peak_power
+                name: Elnät
+                icon: mdi:transmission-tower
+                color:
+                  consumption: "#ef5350"
+                  production: "#66bb6a"
+              individual:
+                - entity: sensor.smart_energy_current_hp_power
+                  name: Värmepump (WF-RAC)
+                  icon: mdi:heat-pump
+                  color: "#26a69a"
+                  show_direction: true
+                - entity: sensor.smart_energy_big_consumers_total_power
+                  name: Storförbrukare
+                  icon: mdi:lightning-bolt
+                  color: "#ff7043"
+                  show_direction: true
+
+          - type: entities
+            title: Effekttariff & Toppeffektbevakning
+            show_header_toggle: false
+            entities:
+              - entity: sensor.smart_energy_projected_peak_power
+                name: Prognostiserad Toppeffekt
+              - entity: sensor.smart_energy_effekttariff_monthly_savings
+                name: Beräknad Månadsbesparing (Effektvakt)
+              - entity: sensor.smart_energy_total_electricity_price
+                name: Totalpris inkl. Elnät & Moms
+
+      # ========================================================================
+      # SECTION 3: QUICK CONTROLS & COMFORT SETTINGS
+      # ========================================================================
+      - type: grid
+        cards:
+          - type: heading
+            heading: Inställningar & Styrning
+            heading_style: title
+            icon: mdi:tune
+
+          - type: entities
+            title: Värmestyrning & Komfort
+            show_header_toggle: false
+            entities:
+              - entity: select.smart_energy_optimization_mode
+                name: Optimeringsläge
+              - entity: number.smart_energy_target_comfort_temperature
+                name: Bas-innetemperatur
+              - entity: number.smart_energy_allowed_temperature_drift
+                name: Tillåten nattsänkning / eco
+              - entity: number.smart_energy_allowed_preheat_boost
+                name: Tillåten förvärmningshöjning
+              - entity: switch.smart_energy_master_automated_dispatch
+                name: Automatisk Termostatstyrning
+              - entity: switch.smart_energy_boiler_smart_scheduling
+                name: Smart Varmvattenberedarestyrning
+              - entity: switch.smart_energy_continuous_model_learning
+                name: Kontinuerlig Självlärning (RLS)
