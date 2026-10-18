@@ -51,25 +51,33 @@ flowchart TD
    https://github.com/castmo/home-assistant-smart-energy
    ```
    Category: **Integration**.
-4. Click **Download**, then restart Home Assistant.
+4. Click **Add**, then click **Download** (choose v2.0.0).
+5. **Restart Home Assistant** (**Settings -> System -> Restart**).
+6. **Hard refresh your browser** (`Ctrl + F5` or `Cmd + Shift + R`) to reload Home Assistant's integration cache.
 
 ### Option 2: Manual Installation
-1. Download the latest release from [Releases](https://github.com/castmo/home-assistant-smart-energy/releases).
+1. Download the latest `v2.0.0` release from [Releases](https://github.com/castmo/home-assistant-smart-energy/releases).
 2. Copy `custom_components/smart_energy_optimizer/` into your Home Assistant `<config>/custom_components/` directory.
 3. Copy `www/smart-energy-optimizer-card.js` into your Home Assistant `<config>/www/` directory.
-4. Restart Home Assistant.
+4. **Restart Home Assistant** and **Hard refresh your browser** (`Ctrl + F5`).
 
 ---
 
-## ⚙️ 1-Minute Quick Setup
+## ⚙️ Adding the Integration
 
-1. In Home Assistant, go to **Settings** -> **Devices & Services** -> **Add Integration**.
-2. Search for **Smart Energy & Thermal Optimizer**.
+> ⚠️ **Important:** You must complete the installation steps above and restart Home Assistant before the integration will appear in the search!
+
+1. In Home Assistant, go to **Settings** -> **Devices & Services** -> **Add Integration** button (bottom right).
+2. Search for:
+   ```text
+   Smart Energy
+   ```
+   *(or search by domain: `smart_energy_optimizer`)*.
 3. **Select only two entities:**
    - **Heat Pump Climate Entity:** Select your heat pump (e.g. `climate.living_room` from Mitsubishi WF-RAC).
    - **Electricity Spot Price Sensor:** Select your price sensor (e.g. `sensor.nordpool_kwh_se3_sek_3_10_025` or `sensor.electricity_price_home`).
    - *(Optional)* Weather entity defaults automatically to your Home Assistant forecast (`weather.forecast_home`).
-4. Click **Submit**!
+4. Click **Submit**! Done!
 
 > 💡 **Using Mitsubishi WF-RAC?** Indoor room temperature, outdoor temperature, and active energy consumption are all auto-detected automatically without needing any extra physical sensors!
 >
