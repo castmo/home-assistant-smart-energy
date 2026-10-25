@@ -1,0 +1,482 @@
+################################################################################
+# LOVELACE DASHBOARD: DEDIKERAD BELYSNINGSPANEL (LIGHTING DASHBOARD)
+# Fil: dashboards/lighting_dashboard.yaml
+#
+# Egenskaper:
+#   1. Byggd med Home Assistants moderna 'Sections'-layout (responsiv för mobil & desktop)
+#   2. Organiserad per rum (Vardagsrum, Kök, Sovrum, Hall, Kontor, Utomhus)
+#   3. Snabbknappar för att släcka allt eller aktivera scener (Morgon, Kvällsmys, Natt)
+#   4. Master-toggles per rum och individuella Tile-kort med ljusstyrka (brightness slider)
+#   5. Separat vy för 'Alla enheter' så ingen lampa försvinner eller tappas bort
+################################################################################
+
+title: Belysning
+views:
+  # ============================================================================
+  # VY 1: RUMSFÖRDELAD BELYSNING (Huvudvy för ljusstyrning)
+  # ============================================================================
+  - title: Rum & Zoner
+    path: rum
+    icon: mdi:home-lightbulb-outline
+    type: sections
+    max_columns: 3
+    sections:
+      # ------------------------------------------------------------------------
+      # SEKTION: HUVUDKONTROLL & SNABBÅTGÄRDER (GLOBAL QUICK ACTIONS)
+      # ------------------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Snabbstyrning
+            heading_style: title
+            icon: mdi:lightning-bolt
+
+          - type: markdown
+            content: >
+              ### 💡 Belysningsstatus
+              Just nu är **{{ states.light | selectattr('state', 'eq', 'on') | list | count }}** lampor tända i hemmet.
+
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: button
+                name: Släck alla lampor
+                icon: mdi:lightbulb-off-outline
+                tap_action:
+                  action: call-service
+                  service: light.turn_off
+                  target:
+                    entity_id: all
+                hold_action:
+                  action: more-info
+                show_state: false
+
+              - type: button
+                name: Kvällsmys
+                icon: mdi:weather-night
+                tap_action:
+                  action: call-service
+                  service: scene.turn_on
+                  target:
+                    entity_id: scene.kvallsmys
+                show_state: false
+
+              - type: button
+                name: Vardagsljus
+                icon: mdi:white-balance-sunny
+                tap_action:
+                  action: call-service
+                  service: scene.turn_on
+                  target:
+                    entity_id: scene.vardag
+                show_state: false
+
+              - type: button
+                name: Nattläge
+                icon: mdi:bed-clock
+                tap_action:
+                  action: call-service
+                  service: scene.turn_on
+                  target:
+                    entity_id: scene.godnatt
+                show_state: false
+
+      # ------------------------------------------------------------------------
+      # SEKTION: VARDAGSRUM
+      # ------------------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Vardagsrum
+            heading_style: title
+            icon: mdi:sofa
+
+          # Master-knapp för hela rummet
+          - type: tile
+            entity: light.vardagsrum
+            name: Alla lampor i Vardagsrummet
+            icon: mdi:sofa
+            color: amber
+            features:
+              - type: light-brightness
+
+          # Individuella lampor med reglage
+          - type: tile
+            entity: light.vardagsrum_taklampa
+            name: Taklampa
+            icon: mdi:ceiling-light
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.vardagsrum_fonster
+            name: Fönsterbelysning
+            icon: mdi:window-closed-variant
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.vardagsrum_golvlampa
+            name: Golvlampa / Läshörna
+            icon: mdi:floor-lamp
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.vardagsrum_tv_led
+            name: TV-Bakgrundsbelysning
+            icon: mdi:television-ambient-light
+            color: amber
+            features:
+              - type: light-brightness
+
+      # ------------------------------------------------------------------------
+      # SEKTION: KÖK & MATPLATS
+      # ------------------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Kök & Matplats
+            heading_style: title
+            icon: mdi:silverware-fork-knife
+
+          # Master-knapp kök
+          - type: tile
+            entity: light.kok
+            name: Alla lampor i Köket
+            icon: mdi:silverware-fork-knife
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.kok_tak
+            name: Köksbelysning Tak
+            icon: mdi:ceiling-light
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.koksbank_spots
+            name: Arbetsbänk Spots
+            icon: mdi:countertop
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.matbord_pendel
+            name: Matbordslampa
+            icon: mdi:lamp
+            color: amber
+            features:
+              - type: light-brightness
+
+      # ------------------------------------------------------------------------
+      # SEKTION: SOVRUM
+      # ------------------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Sovrum
+            heading_style: title
+            icon: mdi:bed
+
+          # Master-knapp sovrum
+          - type: tile
+            entity: light.sovrum
+            name: Alla lampor i Sovrummet
+            icon: mdi:bed
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.sovrum_taklampa
+            name: Taklampa
+            icon: mdi:ceiling-light
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.sovrum_sanglampa_vanster
+            name: Sänglampa Vänster
+            icon: mdi:lamp-outline
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.sovrum_sanglampa_hoger
+            name: Sänglampa Höger
+            icon: mdi:lamp-outline
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.sovrum_fonster
+            name: Fönsterlampa
+            icon: mdi:window-closed-variant
+            color: amber
+            features:
+              - type: light-brightness
+
+      # ------------------------------------------------------------------------
+      # SEKTION: HALL & ENTRÉ
+      # ------------------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Hall & Entré
+            heading_style: title
+            icon: mdi:door
+
+          # Master-knapp hall
+          - type: tile
+            entity: light.hall
+            name: Alla lampor i Hallen
+            icon: mdi:door
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.hall_takplafond
+            name: Takplafond
+            icon: mdi:ceiling-light
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.hall_spegel
+            name: Spegelbelysning
+            icon: mdi:mirror
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.garderob_spots
+            name: Garderobsbelysning
+            icon: mdi:wardrobe-outline
+            color: amber
+            features:
+              - type: light-brightness
+
+      # ------------------------------------------------------------------------
+      # SEKTION: KONTOR & ARBETSRUM
+      # ------------------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Kontor / Arbetsrum
+            heading_style: title
+            icon: mdi:desk
+
+          - type: tile
+            entity: light.kontor
+            name: Alla lampor i Kontoret
+            icon: mdi:desk
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.kontor_tak
+            name: Takbelysning
+            icon: mdi:ceiling-light
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.skrivbordslampa
+            name: Skrivbordslampa
+            icon: mdi:desk-lamp
+            color: amber
+            features:
+              - type: light-brightness
+
+      # ------------------------------------------------------------------------
+      # SEKTION: UTOMHUS & TRÄDGÅRD
+      # ------------------------------------------------------------------------
+      - type: grid
+        cards:
+          - type: heading
+            heading: Utomhus & Fasad
+            heading_style: title
+            icon: mdi:home-flood
+
+          - type: tile
+            entity: light.utomhus
+            name: Alla utomhuslampor
+            icon: mdi:home-flood
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.fasad_framsida
+            name: Fasad Framsida
+            icon: mdi:wall-sconce-flat
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.fasad_baksida
+            name: Fasad Baksida
+            icon: mdi:wall-sconce-flat
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.altan_belysning
+            name: Altan & Uterum
+            icon: mdi:patio-heater
+            color: amber
+            features:
+              - type: light-brightness
+
+          - type: tile
+            entity: light.tradgard_slinga
+            name: Trädgårdsslinga
+            icon: mdi:string-lights
+            color: amber
+            features:
+              - type: light-brightness
+
+  # ============================================================================
+  # VY 2: SCENER & STÄMNING
+  # ============================================================================
+  - title: Scener & Stämning
+    path: scener
+    icon: mdi:palette-outline
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Förvalda Belysningsscener
+            heading_style: title
+            icon: mdi:creation
+
+          - type: entities
+            title: Aktivera Ljusscener
+            show_header_toggle: false
+            entities:
+              - entity: scene.kvallsmys
+                name: Kvällsmys (Dämpat varmt ljus i sällskapsytor)
+              - entity: scene.vardag
+                name: Vardagsljus (Standardbelysning)
+              - entity: scene.filmkvall
+                name: Filmläge (Mörklagt med bakgrunds-LED)
+              - entity: scene.middag
+                name: Middag (Fokus på matbord och kök)
+              - entity: scene.godnatt
+                name: God Natt (Släck alla interiörlampor)
+              - entity: scene.stadning
+                name: Städning / Fullt Ljus (100% på samtliga lampor)
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Automatiseringar & Sensorer
+            heading_style: title
+            icon: mdi:cog-sync
+
+          - type: entities
+            title: Automatiska Ljusregler
+            entities:
+              - entity: input_boolean.motion_lighting_enabled
+                name: Rörelsestyrd belysning
+              - entity: input_boolean.circadian_lighting_enabled
+                name: Dygnsrytm / Automatisk färgtemperatur
+              - entity: input_boolean.outdoor_lighting_dusk_dawn
+                name: Tänd utebelysning vid solnedgång
+
+  # ============================================================================
+  # VY 3: ALLA LAMPOR (KOMPLETT LISTA SÅ ATT INGET TAPPAS BORT)
+  # ============================================================================
+  - title: Alla Enheter
+    path: alla-enheter
+    icon: mdi:format-list-bulleted
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Komplett Enhetsförteckning
+            heading_style: title
+            icon: mdi:lightbulb-multiple
+
+          - type: markdown
+            content: >
+              Denna vy listar samtliga belysningsenheter som finns i Home Assistant.
+              Härifrån kan du alltid nå och styra varje enskild lampa även om den
+              flyttats från huvudpanelen.
+
+          - type: entity-filter
+            entities:
+              - light.vardagsrum_taklampa
+              - light.vardagsrum_fonster
+              - light.vardagsrum_golvlampa
+              - light.vardagsrum_tv_led
+              - light.kok_tak
+              - light.koksbank_spots
+              - light.matbord_pendel
+              - light.sovrum_taklampa
+              - light.sovrum_sanglampa_vanster
+              - light.sovrum_sanglampa_hoger
+              - light.sovrum_fonster
+              - light.hall_takplafond
+              - light.hall_spegel
+              - light.garderob_spots
+              - light.kontor_tak
+              - light.skrivbordslampa
+              - light.fasad_framsida
+              - light.fasad_baksida
+              - light.altan_belysning
+              - light.tradgard_slinga
+            state_filter:
+              - "on"
+            card:
+              type: entities
+              title: "Tända Lampor Just Nu"
+              show_header_toggle: true
+
+          - type: entities
+            title: "Samtliga Lampor i Systemet"
+            show_header_toggle: true
+            entities:
+              - light.vardagsrum_taklampa
+              - light.vardagsrum_fonster
+              - light.vardagsrum_golvlampa
+              - light.vardagsrum_tv_led
+              - light.kok_tak
+              - light.koksbank_spots
+              - light.matbord_pendel
+              - light.sovrum_taklampa
+              - light.sovrum_sanglampa_vanster
+              - light.sovrum_sanglampa_hoger
+              - light.sovrum_fonster
+              - light.hall_takplafond
+              - light.hall_spegel
+              - light.garderob_spots
+              - light.kontor_tak
+              - light.skrivbordslampa
+              - light.fasad_framsida
+              - light.fasad_baksida
+              - light.altan_belysning
+              - light.tradgard_slinga

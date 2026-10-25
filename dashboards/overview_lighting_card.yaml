@@ -1,0 +1,118 @@
+################################################################################
+# LOVELACE KORT: BELYSNINGSÖVERSIKT FÖR HUVUDKONTROLLPANELEN (ÖVERSIKT)
+# Fil: dashboards/overview_lighting_card.yaml
+#
+# Syfte:
+#   Ersätter den röriga listan av lampor på huvuddashboarden med en stilren,
+#   överskådlig sammanfattning och direktlänk till den nya dedikerade Belysningspanelen.
+#   Inga lampor tas bort – tända lampor visas dynamiskt och en snabbknapp tar
+#   dig direkt till den separata belysningsdashboarden (/belysning).
+################################################################################
+
+type: vertical-stack
+cards:
+  # ----------------------------------------------------------------------------
+  # 1. Huvudkort med status, snabblänk & släck-knapp
+  # ----------------------------------------------------------------------------
+  - type: custom:mushroom-chips-card # Om Mushroom finns, annars fallback till grid
+    chips:
+      - type: entity
+        entity: sensor.active_lights_count
+        icon: mdi:lightbulb-multiple
+        name: "{{ states.light | selectattr('state', 'eq', 'on') | list | count }} lampor tända"
+      - type: action
+        icon: mdi:lightbulb-off-outline
+        tap_action:
+          action: call-service
+          service: light.turn_off
+          target:
+            entity_id: all
+      - type: action
+        icon: mdi:arrow-right-circle-outline
+        name: Öppna Belysningspanelen
+        tap_action:
+          action: navigate
+          navigation_path: /belysning
+
+  # ----------------------------------------------------------------------------
+  # 2. Om du använder Home Assistant Core (utan externa HACS-tillägg):
+  #    Detta rena Core Tile / Grid-kort fungerar direkt överallt!
+  # ----------------------------------------------------------------------------
+  - type: grid
+    columns: 2
+    square: false
+    cards:
+      - type: tile
+        entity: light.all_lights # eller grupp för samtliga lampor
+        name: Belysning
+        icon: mdi:lightbulb-group
+        color: amber
+        tap_action:
+          action: navigate
+          navigation_path: /belysning
+        hold_action:
+          action: more-info
+
+      - type: button
+        name: Gå till Belysningspanelen ➜
+        icon: mdi:view-dashboard-variant-outline
+        tap_action:
+          action: navigate
+          navigation_path: /belysning
+
+  # ----------------------------------------------------------------------------
+  # 3. Snabböversikt per rum (Kompakt rad)
+  # ----------------------------------------------------------------------------
+  - type: glance
+    title: Tända lampor per rum (Tryck för att tända/släcka)
+    show_state: false
+    show_name: true
+    entities:
+      - entity: light.vardagsrum
+        name: Vardagsrum
+        icon: mdi:sofa
+      - entity: light.kok
+        name: Kök
+        icon: mdi:silverware-fork-knife
+      - entity: light.sovrum
+        name: Sovrum
+        icon: mdi:bed
+      - entity: light.hall
+        name: Hall
+        icon: mdi:door
+      - entity: light.utomhus
+        name: Ute
+        icon: mdi:home-flood
+
+  # ----------------------------------------------------------------------------
+  # 4. Dynamiskt filter: Visar endast de lampor som faktiskt är TÄNDA just nu
+  #    (Tar ingen plats när lamporna är släckta!)
+  # ----------------------------------------------------------------------------
+  - type: entity-filter
+    entities:
+      - light.vardagsrum_taklampa
+      - light.vardagsrum_fonster
+      - light.vardagsrum_golvlampa
+      - light.vardagsrum_tv_led
+      - light.kok_tak
+      - light.koksbank_spots
+      - light.matbord_pendel
+      - light.sovrum_taklampa
+      - light.sovrum_sanglampa_vanster
+      - light.sovrum_sanglampa_hoger
+      - light.sovrum_fonster
+      - light.hall_takplafond
+      - light.hall_spegel
+      - light.garderob_spots
+      - light.kontor_tak
+      - light.skrivbordslampa
+      - light.fasad_framsida
+      - light.fasad_baksida
+      - light.altan_belysning
+      - light.tradgard_slinga
+    state_filter:
+      - "on"
+    card:
+      type: entities
+      title: Just nu tända lampor
+      show_header_toggle: false

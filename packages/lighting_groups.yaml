@@ -1,0 +1,187 @@
+################################################################################
+# HOME ASSISTANT PACKAGE: BELYSNINGSGRUPPER & SCENER (LIGHT GROUPS & SCENES)
+# Fil: packages/lighting_groups.yaml
+#
+# Detta paket skapar:
+#   1. Rumsövergripande ljusgrupper (Master-switchar för Vardagsrum, Kök, etc.)
+#   2. Sensor för antal aktiva lampor (sensor.active_lights_count)
+#   3. Standardscener (Kvällsmys, Vardag, Filmläge, God Natt, Städning)
+################################################################################
+
+light:
+  # Huvudgrupp för alla lampor i hela huset
+  - platform: group
+    name: Alla Lampor
+    unique_id: light_group_all_home_lights
+    entities:
+      - light.vardagsrum
+      - light.kok
+      - light.sovrum
+      - light.hall
+      - light.kontor
+      - light.utomhus
+
+  # Vardagsrum Master-grupp
+  - platform: group
+    name: Vardagsrum Belysning
+    unique_id: light_group_vardagsrum
+    entities:
+      - light.vardagsrum_taklampa
+      - light.vardagsrum_fonster
+      - light.vardagsrum_golvlampa
+      - light.vardagsrum_tv_led
+
+  # Kök Master-grupp
+  - platform: group
+    name: Kök Belysning
+    unique_id: light_group_kok
+    entities:
+      - light.kok_tak
+      - light.koksbank_spots
+      - light.matbord_pendel
+
+  # Sovrum Master-grupp
+  - platform: group
+    name: Sovrum Belysning
+    unique_id: light_group_sovrum
+    entities:
+      - light.sovrum_taklampa
+      - light.sovrum_sanglampa_vanster
+      - light.sovrum_sanglampa_hoger
+      - light.sovrum_fonster
+
+  # Hall Master-grupp
+  - platform: group
+    name: Hall Belysning
+    unique_id: light_group_hall
+    entities:
+      - light.hall_takplafond
+      - light.hall_spegel
+      - light.garderob_spots
+
+  # Kontor Master-grupp
+  - platform: group
+    name: Kontor Belysning
+    unique_id: light_group_kontor
+    entities:
+      - light.kontor_tak
+      - light.skrivbordslampa
+
+  # Utomhus Master-grupp
+  - platform: group
+    name: Utomhus Belysning
+    unique_id: light_group_utomhus
+    entities:
+      - light.fasad_framsida
+      - light.fasad_baksida
+      - light.altan_belysning
+      - light.tradgard_slinga
+
+# ------------------------------------------------------------------------------
+# TEMPLATE SENSOR: RÄKNARE FÖR AKTIVA LAMPOR
+# ------------------------------------------------------------------------------
+template:
+  - sensor:
+      - name: "Aktiva Lampor Antal"
+        unique_id: sensor_active_lights_count
+        icon: mdi:lightbulb-multiple
+        state: >
+          {{ states.light 
+             | rejectattr('attributes.is_hue_group', 'defined', true)
+             | selectattr('state', 'eq', 'on') 
+             | list | count }}
+        attributes:
+          active_entities: >
+            {{ states.light 
+               | rejectattr('attributes.is_hue_group', 'defined', true)
+               | selectattr('state', 'eq', 'on') 
+               | map(attribute='entity_id') 
+               | list }}
+
+# ------------------------------------------------------------------------------
+# STANDARDSCENER FÖR SNABBSTYRNING
+# ------------------------------------------------------------------------------
+scene:
+  - name: Kvällsmys
+    id: scene_kvallsmys
+    entities:
+      light.vardagsrum_fonster:
+        state: "on"
+        brightness: 75
+      light.vardagsrum_golvlampa:
+        state: "on"
+        brightness: 90
+      light.vardagsrum_taklampa:
+        state: "off"
+      light.koksbank_spots:
+        state: "on"
+        brightness: 50
+      light.kok_tak:
+        state: "off"
+
+  - name: Vardag
+    id: scene_vardag
+    entities:
+      light.vardagsrum_taklampa:
+        state: "on"
+        brightness: 180
+      light.kok_tak:
+        state: "on"
+        brightness: 200
+      light.hall_takplafond:
+        state: "on"
+        brightness: 180
+
+  - name: Filmläge
+    id: scene_filmkvall
+    entities:
+      light.vardagsrum_taklampa:
+        state: "off"
+      light.vardagsrum_fonster:
+        state: "off"
+      light.vardagsrum_tv_led:
+        state: "on"
+        brightness: 60
+      light.vardagsrum_golvlampa:
+        state: "off"
+
+  - name: God Natt
+    id: scene_godnatt
+    entities:
+      light.vardagsrum_taklampa:
+        state: "off"
+      light.vardagsrum_fonster:
+        state: "off"
+      light.vardagsrum_golvlampa:
+        state: "off"
+      light.vardagsrum_tv_led:
+        state: "off"
+      light.kok_tak:
+        state: "off"
+      light.koksbank_spots:
+        state: "off"
+      light.matbord_pendel:
+        state: "off"
+      light.hall_takplafond:
+        state: "off"
+      light.kontor_tak:
+        state: "off"
+
+  - name: Städning & Arbete
+    id: scene_stadning
+    entities:
+      light.vardagsrum_taklampa:
+        state: "on"
+        brightness: 255
+      light.kok_tak:
+        state: "on"
+        brightness: 255
+      light.koksbank_spots:
+        state: "on"
+        brightness: 255
+      light.hall_takplafond:
+        state: "on"
+        brightness: 255
+      light.sovrum_taklampa:
+        state: "on"
+        brightness: 255
